@@ -15,4 +15,4 @@ This folder contains the native Android application (`com.atelier.virtualstylist
 
 ## Optional Local Rebuild (Android Studio)
 1. Open the `android/` directory in **Android Studio** (Ladybug or newer, JDK 17) and sync Gradle.
-2. Firebase project details are automatically read from `../firebase-applet-config.json` into `BuildConfig`. For Google Sign-In on Android with your own signing key, register your package name `com.atelier.virtualstylist` and SHA-1 fingerprint in Firebase project `gen-lang-client-0642761589`.
+2. Firebase project details are automatically read from `../firebase-applet-config.json` into `BuildConfig`. For Google Sign-In on Android with your own signing key, register your package name `com.atelier.virtualstylist` and SHA-1 fingerprint in Firebase project `atelier-virtual-stylist`.

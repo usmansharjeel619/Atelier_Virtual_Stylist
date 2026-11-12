@@ -133,7 +133,7 @@ fun WardrobeScreen(
             if (!state.isFirebaseConfigured) {
                 Surface(color = GalleryCard, border = BorderStroke(1.dp, GalleryBorder)) {
                     Text(
-                        text = "Setup note: Download google-services.json from Firebase project gen-lang-client-0642761589 into android/app/ to enable native Google Sign-In & Firestore.",
+                        text = "Setup note: Download google-services.json from Firebase project atelier-virtual-stylist into android/app/ to enable native Google Sign-In & Firestore.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = GalleryMuted,
                         modifier = Modifier.padding(14.dp)

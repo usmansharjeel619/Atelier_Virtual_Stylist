@@ -1,12 +1,12 @@
 {
-  "projectId": "gen-lang-client-0642761589",
-  "appId": "1:185960240715:web:d67cfaaf8693035cac9fce",
-  "apiKey": "AIzaSyDUXsp-vLZtCNFTj9DovhqVSF9KmQfBB8U",
-  "authDomain": "gen-lang-client-0642761589.firebaseapp.com",
+  "projectId": "atelier-virtual-stylist",
+  "appId": "1:878253945687:web:3118f5bc8120f7f3490412",
+  "apiKey": "AIzaSyBw-oDs0Sp3CMV9_MLAxAZCyPcRFeS7iZ4",
+  "authDomain": "atelier-virtual-stylist.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-0799d294-3624-4e4c-9a51-104a4a07720d",
-  "storageBucket": "gen-lang-client-0642761589.firebasestorage.app",
-  "messagingSenderId": "185960240715",
+  "storageBucket": "atelier-virtual-stylist.firebasestorage.app",
+  "messagingSenderId": "878253945687",
   "measurementId": "",
-  "oAuthClientId": "185960240715-va3ms4hsdqop3tlsvho7dunasst8loo3.apps.googleusercontent.com",
+  "oAuthClientId": "878253945687-t34q9n785e58j4u4mu9u8s4saig5r5gp.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }
