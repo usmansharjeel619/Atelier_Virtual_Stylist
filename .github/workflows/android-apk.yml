@@ -6,6 +6,11 @@ on:
     paths:
       - 'android/**'
       - 'firebase-applet-config.json'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: read
+  actions: write
 
 jobs:
   build-apk:
@@ -27,10 +32,39 @@ jobs:
 
       - name: Build Debug APK
         working-directory: android
-        run: gradle :app:assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK Output
+        run: ls -lh android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload Atelier Virtual Stylist APK
         uses: actions/upload-artifact@v4
         with:
           name: atelier-virtual-stylist-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          overwrite: true
+
+      - name: Remove Older APK Artifacts
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.paginate(
+              github.rest.actions.listArtifactsForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'atelier-virtual-stylist-apk',
+                per_page: 100
+              }
+            );
+            for (const artifact of artifacts) {
+              if (artifact.workflow_run?.id !== context.runId) {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+              }
+            }
