@@ -1,0 +1,250 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated atelier user profile and account metadata.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified user email address.",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "Profile avatar URL.",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "email", "createdAt", "updatedAt"]
+    },
+    "GarmentItem": {
+      "title": "GarmentItem",
+      "description": "An analyzed wardrobe item with extracted color palette and styling brief.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique garment identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Garment title.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "category": {
+          "type": "string",
+          "description": "Garment category.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "fabricNotes": {
+          "type": "string",
+          "description": "Fabric and texture notes.",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "styleSummary": {
+          "type": "string",
+          "description": "Editorial styling principles for the piece.",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "season": {
+          "type": "string",
+          "enum": ["Spring/Summer", "Autumn/Winter", "Year-Round"],
+          "description": "Selected season preference."
+        },
+        "silhouette": {
+          "type": "string",
+          "enum": ["Tailored", "Relaxed", "Sculptural"],
+          "description": "Selected silhouette preference."
+        },
+        "budgetTier": {
+          "type": "string",
+          "enum": ["Accessible", "Contemporary", "Designer"],
+          "description": "Selected budget tier preference."
+        },
+        "palette": {
+          "type": "array",
+          "description": "Extracted color palette swatches (1 to 6 entries)."
+        },
+        "styleInsight": {
+          "type": "object",
+          "description": "Actionable AI wearing advice based on garment material and cut."
+        },
+        "quickTips": {
+          "type": "array",
+          "description": "Concise actionable quick styling tips (up to 6 items)."
+        },
+        "sourceImageDataUrl": {
+          "type": "string",
+          "description": "Compressed image data URL of the uploaded garment.",
+          "minLength": 10,
+          "maxLength": 450000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "category",
+        "fabricNotes",
+        "styleSummary",
+        "season",
+        "silhouette",
+        "budgetTier",
+        "palette",
+        "sourceImageDataUrl",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OutfitLook": {
+      "title": "OutfitLook",
+      "description": "A single occasion flat-lay outfit look belonging to a saved garment or custom canvas.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique look identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "garmentId": {
+          "type": "string",
+          "description": "Parent garment identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "occasion": {
+          "type": "string",
+          "enum": ["Casual", "Business", "Night Out", "Custom"],
+          "description": "Occasion category."
+        },
+        "title": {
+          "type": "string",
+          "description": "Editorial look title.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "stylingRationale": {
+          "type": "string",
+          "description": "Why the selected pieces harmonize with the anchor item.",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "pieces": {
+          "type": "array",
+          "description": "Itemized piece breakdown (up to 10 items)."
+        },
+        "flatLayImageDataUrl": {
+          "type": "string",
+          "description": "Compressed flat-lay image data URL.",
+          "maxLength": 550000
+        },
+        "editPromptHistory": {
+          "type": "array",
+          "description": "Ordered list of prompt refinement instructions (up to 12)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "garmentId",
+        "occasion",
+        "title",
+        "stylingRationale",
+        "pieces",
+        "editPromptHistory",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user profile isolated to the authenticated account owner."
+    },
+    "/users/{userId}/garments/{garmentId}": {
+      "schema": {
+        "$ref": "#/entities/GarmentItem"
+      },
+      "description": "User's saved wardrobe anchor garments with color & style analysis."
+    },
+    "/users/{userId}/garments/{garmentId}/looks/{lookId}": {
+      "schema": {
+        "$ref": "#/entities/OutfitLook"
+      },
+      "description": "Generated and prompt-edited flat-lay outfit looks linked to a garment."
+    }
+  }
+}

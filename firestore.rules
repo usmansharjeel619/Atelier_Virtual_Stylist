@@ -1,0 +1,203 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny all reads and writes by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation Blueprints (Anti-Update-Gap)
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'photoUrl', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStyleInsight(insight) {
+      return insight is map
+        && insight.keys().hasAll(['fitAndProportion', 'materialAndDrape', 'howToWear', 'whatToAvoid'])
+        && insight.keys().hasOnly(['fitAndProportion', 'materialAndDrape', 'howToWear', 'whatToAvoid'])
+        && insight.fitAndProportion is string && insight.fitAndProportion.size() >= 1 && insight.fitAndProportion.size() <= 600
+        && insight.materialAndDrape is string && insight.materialAndDrape.size() >= 1 && insight.materialAndDrape.size() <= 600
+        && insight.howToWear is string && insight.howToWear.size() >= 1 && insight.howToWear.size() <= 600
+        && insight.whatToAvoid is string && insight.whatToAvoid.size() >= 1 && insight.whatToAvoid.size() <= 600;
+    }
+
+    function isValidGarment(data, userId, garmentId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'category', 'fabricNotes', 'styleSummary',
+          'season', 'silhouette', 'budgetTier', 'palette', 'sourceImageDataUrl',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'category', 'fabricNotes', 'styleSummary',
+          'season', 'silhouette', 'budgetTier', 'palette', 'styleInsight', 'quickTips', 'sourceImageDataUrl',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == garmentId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 80
+        && data.fabricNotes is string && data.fabricNotes.size() >= 1 && data.fabricNotes.size() <= 600
+        && data.styleSummary is string && data.styleSummary.size() >= 1 && data.styleSummary.size() <= 1200
+        && data.season in ['Spring/Summer', 'Autumn/Winter', 'Year-Round']
+        && data.silhouette in ['Tailored', 'Relaxed', 'Sculptural']
+        && data.budgetTier in ['Accessible', 'Contemporary', 'Designer']
+        && data.palette is list && data.palette.size() >= 1 && data.palette.size() <= 6
+        && data.palette[0] is map
+        && (!('styleInsight' in data) || isValidStyleInsight(data.styleInsight))
+        && (!('quickTips' in data) || (data.quickTips is list && data.quickTips.size() >= 1 && data.quickTips.size() <= 6 && data.quickTips[0] is string && data.quickTips[0].size() <= 200))
+        && data.sourceImageDataUrl is string && data.sourceImageDataUrl.size() >= 10 && data.sourceImageDataUrl.size() <= 450000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLook(data, userId, garmentId, lookId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'garmentId', 'occasion', 'title', 'stylingRationale',
+          'pieces', 'editPromptHistory', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'garmentId', 'occasion', 'title', 'stylingRationale',
+          'pieces', 'flatLayImageDataUrl', 'editPromptHistory', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == lookId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.garmentId)
+        && data.garmentId == garmentId
+        && data.occasion in ['Casual', 'Business', 'Night Out', 'Custom']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.stylingRationale is string && data.stylingRationale.size() >= 1 && data.stylingRationale.size() <= 1200
+        && data.pieces is list && data.pieces.size() >= 1 && data.pieces.size() <= 10
+        && data.pieces[0] is map
+        && (!('flatLayImageDataUrl' in data) || (data.flatLayImageDataUrl is string && data.flatLayImageDataUrl.size() <= 550000))
+        && data.editPromptHistory is list && data.editPromptHistory.size() <= 12
+        && (data.editPromptHistory.size() == 0 || data.editPromptHistory[0] is string)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // User profile (PII isolated strictly to owner)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'updatedAt']);
+      allow delete: if false;
+
+      // Saved wardrobe anchor garments
+      match /garments/{garmentId} {
+        allow get: if isValidId(userId) && isValidId(garmentId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(garmentId)
+          && isOwner(userId)
+          && isValidGarment(incoming(), userId, garmentId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(garmentId)
+          && isOwner(userId)
+          && isValidGarment(incoming(), userId, garmentId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'styleSummary', 'season', 'silhouette', 'budgetTier', 'styleInsight', 'quickTips', 'updatedAt']);
+        allow delete: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(garmentId)
+          && isOwner(userId);
+
+        // Generated and edited flat-lay looks under a garment
+        match /looks/{lookId} {
+          allow get: if isValidId(userId) && isValidId(garmentId) && isValidId(lookId) && isOwner(userId);
+          allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isVerifiedUser()
+            && isValidId(userId)
+            && isValidId(garmentId)
+            && isValidId(lookId)
+            && isOwner(userId)
+            && isValidLook(incoming(), userId, garmentId, lookId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time
+            && get(/databases/$(database)/documents/users/$(userId)/garments/$(garmentId)).data.ownerId == request.auth.uid;
+          allow update: if isVerifiedUser()
+            && isValidId(userId)
+            && isValidId(garmentId)
+            && isValidId(lookId)
+            && isOwner(userId)
+            && isValidLook(incoming(), userId, garmentId, lookId)
+            && incoming().id == existing().id
+            && incoming().ownerId == existing().ownerId
+            && incoming().garmentId == existing().garmentId
+            && incoming().occasion == existing().occasion
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'stylingRationale', 'pieces', 'flatLayImageDataUrl', 'editPromptHistory', 'updatedAt'
+            ]);
+          allow delete: if isVerifiedUser()
+            && isValidId(userId)
+            && isValidId(garmentId)
+            && isValidId(lookId)
+            && isOwner(userId);
+        }
+      }
+    }
+  }
+}

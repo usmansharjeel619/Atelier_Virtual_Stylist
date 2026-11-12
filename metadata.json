@@ -1,0 +1,6 @@
+{
+  "name": "Atelier Virtual Stylist",
+  "description": "Editorial virtual styling studio that analyzes your garment's color palette and style to generate Casual, Business, and Night Out flat-lay outfits with prompt-driven editing and cloud wardrobe sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
