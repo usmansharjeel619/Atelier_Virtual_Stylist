@@ -52,6 +52,24 @@ object ImageCodec {
         compressBytes(bytes, maxDimension, maxDataUrlChars)
     }
 
+    suspend fun loadAssetAndEncode(
+        context: Context,
+        assetPath: String,
+        maxDimension: Int = 1024,
+        maxDataUrlChars: Int = 420_000
+    ): EncodedImage = withContext(Dispatchers.IO) {
+        val bytes = context.assets.open(assetPath).use { it.readBytes() }
+        compressBytes(bytes, maxDimension, maxDataUrlChars)
+    }
+
+    fun decodeAssetBitmap(context: Context, assetPath: String): Bitmap? {
+        return try {
+            context.assets.open(assetPath).use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     suspend fun fetchAndEncodeUrl(
         url: String,
         maxDimension: Int = 1024,

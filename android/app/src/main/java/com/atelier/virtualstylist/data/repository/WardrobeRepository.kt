@@ -1,5 +1,6 @@
 package com.atelier.virtualstylist.data.repository
 
+import android.app.Activity
 import android.content.Context
 import com.atelier.virtualstylist.BuildConfig
 import com.atelier.virtualstylist.data.model.GarmentAnalysis
@@ -15,6 +16,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.OAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -83,9 +85,35 @@ class WardrobeRepository(context: Context) {
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
 
+    suspend fun checkPendingOAuthResult(): FirebaseUser? {
+        val firebaseAuth = auth ?: return null
+        val pendingTask = firebaseAuth.pendingAuthResult ?: return null
+        val result = pendingTask.await()
+        val user = result.user ?: return null
+        ensureUserProfile(user)
+        return user
+    }
+
+    suspend fun signInWithGoogleOAuth(activity: Activity): FirebaseUser {
+        val firebaseAuth = auth
+            ?: throw IllegalStateException("Firebase is not configured for this build.")
+        val pending = firebaseAuth.pendingAuthResult
+        val result = if (pending != null) {
+            pending.await()
+        } else {
+            val provider = OAuthProvider.newBuilder("google.com")
+                .addCustomParameter("prompt", "select_account")
+                .build()
+            firebaseAuth.startActivityForSignInWithProvider(activity, provider).await()
+        }
+        val user = result.user ?: throw IllegalStateException("Google Sign-In did not return a user.")
+        ensureUserProfile(user)
+        return user
+    }
+
     suspend fun signInWithGoogleIdToken(idToken: String): FirebaseUser {
         val firebaseAuth = auth
-            ?: throw IllegalStateException("Add google-services.json to android/app/ to enable Cloud Wardrobe sync.")
+            ?: throw IllegalStateException("Firebase is not configured for this build.")
         val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
         val result = firebaseAuth.signInWithCredential(credential).await()
         val user = result.user ?: throw IllegalStateException("Google Sign-In failed.")

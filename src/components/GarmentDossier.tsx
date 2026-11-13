@@ -20,6 +20,8 @@ function getSwatchWeight(role: string, index: number): number {
   return 1;
 }
 
+const SWATCH_ROTATIONS = ['-rotate-1', 'rotate-1', '-rotate-1', 'rotate-1', '-rotate-1'];
+
 export function GarmentDossier({
   analysis,
   brief,
@@ -71,97 +73,99 @@ export function GarmentDossier({
     ? [
         {
           index: '01',
-          label: 'Proportion & Cut',
+          label: 'Fit & Proportion',
+          accentBg: 'bg-[#D4FF38] text-[#111111]',
           body: insight.fitAndProportion,
         },
         {
           index: '02',
-          label: 'Material & Drape',
+          label: 'Texture & Drape',
+          accentBg: 'bg-[#2B4BFF] text-white',
           body: insight.materialAndDrape,
         },
         {
           index: '03',
           label: 'How to Wear It',
+          accentBg: 'bg-[#D5A8FF] text-[#111111]',
           body: insight.howToWear,
         },
         {
           index: '04',
-          label: 'What to Avoid',
+          label: 'Skip This',
+          accentBg: 'bg-[#FF3D6E] text-white',
           body: insight.whatToAvoid,
         },
       ]
     : [];
 
   return (
-    <section className="relative max-w-[1280px] mx-auto px-6 md:px-10 py-10 border-b border-[#E5E3DC] space-y-8">
-      {/* Top Editorial Garment Read */}
+    <section className="relative max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 py-12 border-b-[3px] border-[#111111] space-y-10">
+      {/* Top Piece DNA Read with Overlapping Collage Stickers */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-8 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#68665F]">
-              <span className="font-mono uppercase tracking-wider text-[#8A6A42]">Garment Dossier</span>
-              <span aria-hidden="true">·</span>
-              <span>{analysis.category}</span>
-              <span aria-hidden="true">·</span>
-              <span>{brief.season}</span>
-              <span aria-hidden="true">·</span>
-              <span>{brief.silhouette}</span>
-              <span aria-hidden="true">·</span>
-              <span>{brief.budgetTier}</span>
+        <div className="lg:col-span-8 relative pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider">
+              <span className="-rotate-2 bg-[#2B4BFF] text-white border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-2.5 py-0.5 font-bold">
+                Piece DNA · {analysis.category}
+              </span>
+              <span className="font-bold text-[#545149]">
+                {brief.season} · {brief.silhouette} · {brief.budgetTier}
+              </span>
             </div>
 
             <button
               type="button"
               onClick={handleOpenQuickTips}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-[#141413] bg-white text-xs font-medium text-[#141413] hover:bg-[#141413] hover:text-[#FAF9F6] transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A6A42]"
+              className="zine-btn rotate-1 hover:rotate-0 inline-flex items-center gap-2 px-4 py-2 bg-[#D4FF38] text-xs font-mono font-bold uppercase tracking-wider text-[#111111] whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <Lightbulb className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <Lightbulb className="w-4 h-4" strokeWidth={2.5} />
               <span>Quick Tips</span>
             </button>
           </div>
 
-          <h2 className="font-serif text-3xl md:text-4xl font-medium text-[#141413] text-balance">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#111111] text-balance leading-[1.03]">
             {analysis.garmentTitle}
           </h2>
 
-          <p className="text-base text-[#141413]/85 leading-relaxed max-w-[68ch]">
+          <p className="text-base text-[#111111]/90 leading-relaxed max-w-[66ch] mt-4 font-medium">
             {analysis.styleSummary}
           </p>
         </div>
 
-        <div className="lg:col-span-4 border border-[#E5E3DC] bg-white p-5 space-y-2.5">
-          <p className="text-xs font-mono uppercase tracking-wider text-[#68665F]">
-            Material &amp; Pattern Read
-          </p>
-          <p className="text-sm text-[#141413]/85 leading-relaxed">{analysis.fabricNotes}</p>
+        <div className="lg:col-span-4 relative pt-3">
+          <div className="absolute -top-0.5 left-5 z-10 -rotate-2 bg-[#FF6B2C] text-white border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase">
+            Texture &amp; Cut
+          </div>
+          <div className="zine-card-cobalt rotate-1 hover:rotate-0 transition-transform p-5 pt-6 space-y-2">
+            <p className="text-sm font-medium text-[#111111] leading-relaxed">
+              {analysis.fabricNotes}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Visual Color Palette Grid */}
-      <div className="border border-[#E5E3DC] bg-white">
-        <div className="px-6 py-4 border-b border-[#E5E3DC] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-mono uppercase tracking-wider text-[#8A6A42]">
-              Color Palette
+      {/* Color DNA Collage Board */}
+      <div className="zine-card-lg overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 bg-[#111111] text-white border-b-[3px] border-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-wider">
+            <span className="-rotate-1 bg-[#D4FF38] text-[#111111] px-2.5 py-0.5 font-bold border-2 border-white">
+              Color DNA
             </span>
-            <span aria-hidden="true" className="text-[#68665F]">
-              ·
-            </span>
-            <span className="text-[#68665F]">
-              Extracted garment tones and their role in the look
+            <span className="text-[#EBE7DA] font-bold">
+              Extracted Tones · Tap to Copy
             </span>
           </div>
-          <span className="text-xs font-mono tabular-nums text-[#68665F]">
-            {analysis.palette.length} {analysis.palette.length === 1 ? 'Swatch' : 'Swatches'}
+          <span className="text-xs font-mono font-bold tabular-nums text-[#D4FF38]">
+            {analysis.palette.length} {analysis.palette.length === 1 ? 'SWATCH' : 'SWATCHES'}
           </span>
         </div>
 
-        {/* Continuous Tonal Proportion Bar */}
         {analysis.palette.length > 0 && (
-          <div className="flex h-3 w-full border-b border-[#E5E3DC]" aria-hidden="true">
+          <div className="flex h-4 w-full border-b-[3px] border-[#111111]" aria-hidden="true">
             {analysis.palette.map((swatch, idx) => (
               <div
                 key={`bar-${swatch.hex}-${idx}`}
+                className="border-r-2 last:border-r-0 border-[#111111]"
                 style={{
                   backgroundColor: swatch.hex,
                   flexGrow: getSwatchWeight(swatch.role, idx),
@@ -171,7 +175,7 @@ export function GarmentDossier({
           </div>
         )}
 
-        <div className="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
           {analysis.palette.map((swatch, idx) => {
             const hexUpper = swatch.hex.toUpperCase();
             const isCopied = copiedHex === hexUpper;
@@ -179,37 +183,36 @@ export function GarmentDossier({
             return (
               <div
                 key={`${swatch.hex}-${idx}`}
-                className="border border-[#E5E3DC] bg-[#FAF9F6] flex flex-col overflow-hidden"
+                className={`${SWATCH_ROTATIONS[idx % SWATCH_ROTATIONS.length]} hover:rotate-0 transition-transform border-[3px] border-[#111111] shadow-[4px_4px_0_#111111] bg-[#F6F4EC] flex flex-col overflow-hidden`}
               >
                 <div
-                  className="h-24 w-full border-b border-black/10"
+                  className="h-24 w-full border-b-[3px] border-[#111111] relative"
                   style={{ backgroundColor: swatch.hex }}
                   aria-label={`${swatch.name} (${hexUpper}), role: ${swatch.role}`}
-                />
-                <div className="p-3.5 flex-1 flex flex-col justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-[#8A6A42] truncate">
-                      {swatch.role}
-                    </p>
-                    <p className="text-sm font-medium text-[#141413] leading-snug truncate">
-                      {swatch.name}
-                    </p>
-                  </div>
+                >
+                  <span className="absolute bottom-1.5 left-1.5 bg-white border-2 border-[#111111] px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase text-[#111111]">
+                    {swatch.role}
+                  </span>
+                </div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between gap-2 bg-white">
+                  <p className="font-display text-sm font-extrabold text-[#111111] leading-snug truncate">
+                    {swatch.name}
+                  </p>
 
                   <button
                     type="button"
                     onClick={() => handleCopyHex(swatch.hex)}
                     title={`Copy ${hexUpper}`}
-                    className="pt-2 border-t border-[#E5E3DC]/80 flex items-center justify-between text-xs font-mono tabular-nums text-[#68665F] hover:text-[#141413] transition-colors cursor-pointer"
+                    className="pt-2 border-t-2 border-[#111111]/15 flex items-center justify-between text-xs font-mono font-bold tabular-nums text-[#545149] hover:text-[#2B4BFF] transition-colors cursor-pointer"
                   >
                     <span>{hexUpper}</span>
                     {isCopied ? (
-                      <span className="inline-flex items-center gap-1 text-[#8A6A42]">
-                        <Check className="w-3 h-3" strokeWidth={1.75} />
-                        <span>Copied</span>
+                      <span className="inline-flex items-center gap-1 bg-[#D4FF38] text-[#111111] border border-[#111111] px-1.5 py-0.5 text-[10px]">
+                        <Check className="w-3 h-3" strokeWidth={2.5} />
+                        <span>COPIED</span>
                       </span>
                     ) : (
-                      <Copy className="w-3 h-3" strokeWidth={1.5} />
+                      <Copy className="w-3.5 h-3.5" strokeWidth={2} />
                     )}
                   </button>
                 </div>
@@ -219,18 +222,15 @@ export function GarmentDossier({
         </div>
       </div>
 
-      {/* Style Insight Section: Actionable Material & Cut Guidance */}
-      <div className="border border-[#E5E3DC] bg-white">
-        <div className="px-6 py-4 border-b border-[#E5E3DC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-mono uppercase tracking-wider text-[#8A6A42]">
-              Style Insight
+      {/* Style Cheat Sheet */}
+      <div className="zine-card-coral overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 bg-[#D5A8FF] border-b-[3px] border-[#111111] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider">
+            <span className="bg-[#111111] text-[#D4FF38] px-2.5 py-0.5 font-bold">
+              Style Cheat Sheet
             </span>
-            <span aria-hidden="true" className="text-[#68665F]">
-              ·
-            </span>
-            <span className="text-[#68665F]">
-              Actionable wearing guidance by material and cut
+            <span className="text-[#111111] font-bold">
+              Cut, Drape &amp; Styling Rules
             </span>
           </div>
 
@@ -239,18 +239,18 @@ export function GarmentDossier({
               type="button"
               disabled={isLoadingInsight}
               onClick={onRefreshInsight}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E3DC] bg-[#FAF9F6] text-xs font-medium text-[#141413] hover:border-[#141413] disabled:opacity-50 transition-colors whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-auto"
+              className="zine-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-xs font-mono font-bold uppercase text-[#111111] hover:bg-[#D4FF38] disabled:opacity-50 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-auto"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${isLoadingInsight ? 'animate-spin' : ''}`}
-                strokeWidth={1.5}
+                strokeWidth={2.2}
               />
               <span>
                 {isLoadingInsight
-                  ? 'Refining Insight...'
+                  ? 'Refining...'
                   : insight
-                    ? 'Refresh Style Insight'
-                    : 'Generate Style Insight'}
+                    ? 'Remix Insight'
+                    : 'Generate Insight'}
               </span>
             </button>
           )}
@@ -259,46 +259,47 @@ export function GarmentDossier({
         {insightError && (
           <div
             role="alert"
-            className="px-6 py-3 bg-[#FEF2F2] border-b border-[#9A3412]/20 text-xs text-[#7F1D1D]"
+            className="px-6 py-3 bg-[#FFE5EC] border-b-[3px] border-[#111111] text-xs font-bold text-[#9F1239]"
           >
             {insightError}
           </div>
         )}
 
         {isLoadingInsight ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E5E3DC]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y-[3px] md:divide-y-0 md:divide-x-[3px] divide-[#111111]">
             {[0, 1, 2, 3].map((slot) => (
               <div key={slot} className="p-6 space-y-3 animate-pulse">
-                <div className="h-3 w-24 bg-[#E5E3DC]" />
-                <div className="h-3 w-full bg-[#F4F3EE]" />
-                <div className="h-3 w-5/6 bg-[#F4F3EE]" />
-                <div className="h-3 w-2/3 bg-[#F4F3EE]" />
+                <div className="h-4 w-24 bg-[#EBE7DA]" />
+                <div className="h-3 w-full bg-[#F6F4EC]" />
+                <div className="h-3 w-5/6 bg-[#F6F4EC]" />
               </div>
             ))}
           </div>
         ) : insight ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E5E3DC]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y-[3px] md:divide-y-0 md:divide-x-[3px] divide-[#111111] bg-white">
             {insightItems.map((item) => (
-              <div key={item.index} className="p-6 space-y-2.5">
-                <p className="text-xs font-mono text-[#68665F]">
-                  <span className="text-[#8A6A42]">{item.index}.</span> {item.label}
-                </p>
-                <p className="text-sm text-[#141413]/90 leading-relaxed">{item.body}</p>
+              <div key={item.index} className="p-6 space-y-3">
+                <span
+                  className={`inline-block border-2 border-[#111111] shadow-[2px_2px_0_#111111] px-2.5 py-0.5 text-xs font-mono font-bold uppercase ${item.accentBg}`}
+                >
+                  {item.index} · {item.label}
+                </span>
+                <p className="text-sm text-[#111111] leading-relaxed font-medium">{item.body}</p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="px-6 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF9F6]">
-            <p className="text-sm text-[#68665F]">
+          <div className="px-6 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#F6F4EC]">
+            <p className="text-sm font-medium text-[#545149]">
               Generate tailored proportion, fabric drape, and wearing guidance for this piece.
             </p>
             {onRefreshInsight && (
               <button
                 type="button"
                 onClick={onRefreshInsight}
-                className="px-4 py-2 bg-[#141413] text-[#FAF9F6] text-xs font-medium hover:bg-[#2B2A28] transition-colors whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-auto"
+                className="zine-btn px-4 py-2 bg-[#D4FF38] text-[#111111] text-xs font-mono font-bold uppercase whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-auto"
               >
-                Generate Style Insight
+                Generate Cheat Sheet
               </button>
             )}
           </div>
@@ -308,7 +309,7 @@ export function GarmentDossier({
       {/* Quick Tips Overlay */}
       {isQuickTipsOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/45 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[2px]"
           role="dialog"
           aria-modal="true"
           aria-label="Quick Styling Tips"
@@ -318,18 +319,13 @@ export function GarmentDossier({
             }
           }}
         >
-          <div className="w-full max-w-xl bg-[#FAF9F6] border border-[#141413] shadow-xl overflow-hidden">
-            {/* Overlay Header */}
-            <div className="px-6 py-5 bg-white border-b border-[#E5E3DC] flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-[#68665F]">
-                  <span className="font-mono uppercase tracking-wider text-[#8A6A42]">
-                    Quick Tips
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>Texture &amp; Cut Cues</span>
-                </div>
-                <h3 className="font-serif text-2xl font-medium text-[#141413] leading-snug">
+          <div className="w-full max-w-xl bg-[#F6F4EC] border-[4px] border-[#111111] shadow-[10px_10px_0_#D4FF38] overflow-hidden">
+            <div className="px-6 py-5 bg-[#111111] text-white border-b-[3px] border-[#111111] flex items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <span className="inline-block bg-[#FF3D6E] text-white border-2 border-white px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider">
+                  Quick Styling Hits
+                </span>
+                <h3 className="font-display text-2xl font-extrabold text-white leading-snug">
                   {analysis.garmentTitle}
                 </h3>
               </div>
@@ -338,23 +334,22 @@ export function GarmentDossier({
                 type="button"
                 onClick={() => setIsQuickTipsOpen(false)}
                 aria-label="Close Quick Tips"
-                className="p-2 border border-[#E5E3DC] text-[#141413] hover:border-[#141413] transition-colors cursor-pointer shrink-0"
+                className="p-2 border-2 border-white text-white hover:bg-[#FF3D6E] transition-colors cursor-pointer shrink-0"
               >
-                <X className="w-4 h-4" strokeWidth={1.5} />
+                <X className="w-4 h-4" strokeWidth={2.5} />
               </button>
             </div>
 
-            {/* Overlay Body */}
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-              <p className="text-xs text-[#68665F] leading-relaxed border-b border-[#E5E3DC] pb-4">
-                <span className="font-medium text-[#141413]">Cut &amp; Texture Basis: </span>
+              <p className="text-xs text-[#545149] leading-relaxed border-b-[3px] border-[#111111]/15 pb-4">
+                <span className="font-mono font-bold uppercase text-[#111111]">Texture &amp; Cut: </span>
                 {analysis.fabricNotes}
               </p>
 
               {quickTipsError && (
                 <div
                   role="alert"
-                  className="p-3 bg-[#FEF2F2] border border-[#9A3412]/20 text-xs text-[#7F1D1D]"
+                  className="p-3 bg-[#FFE5EC] border-[3px] border-[#111111] text-xs font-bold text-[#9F1239]"
                 >
                   {quickTipsError}
                 </div>
@@ -365,34 +360,36 @@ export function GarmentDossier({
                   {[0, 1, 2, 3].map((slot) => (
                     <div
                       key={slot}
-                      className="p-4 border border-[#E5E3DC] bg-white animate-pulse flex items-center gap-3"
+                      className="p-4 border-[3px] border-[#111111] bg-white animate-pulse flex items-center gap-3"
                     >
-                      <div className="w-6 h-3 bg-[#E5E3DC]" />
-                      <div className="h-3 flex-1 bg-[#F4F3EE]" />
+                      <div className="w-6 h-3 bg-[#EBE7DA]" />
+                      <div className="h-3 flex-1 bg-[#F6F4EC]" />
                     </div>
                   ))}
                 </div>
               ) : quickTips.length > 0 ? (
-                <ol className="divide-y divide-[#E5E3DC] border border-[#E5E3DC] bg-white">
+                <ol className="divide-y-[3px] divide-[#111111] border-[3px] border-[#111111] shadow-[4px_4px_0_#111111] bg-white">
                   {quickTips.map((tip, idx) => (
                     <li key={idx} className="px-5 py-4 flex items-baseline gap-4">
-                      <span className="text-xs font-mono tabular-nums text-[#8A6A42] shrink-0">
+                      <span className="bg-[#D4FF38] border-2 border-[#111111] px-2 py-0.5 text-xs font-mono font-bold tabular-nums text-[#111111] shrink-0">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
-                      <span className="text-sm text-[#141413] leading-relaxed">{tip}</span>
+                      <span className="text-sm font-medium text-[#111111] leading-relaxed">
+                        {tip}
+                      </span>
                     </li>
                   ))}
                 </ol>
               ) : (
-                <div className="p-6 border border-[#E5E3DC] bg-white text-center space-y-3">
-                  <p className="text-sm text-[#68665F]">
-                    Generate concise styling cues tailored to this garment&apos;s cut and texture.
+                <div className="p-6 border-[3px] border-[#111111] bg-white text-center space-y-3">
+                  <p className="text-sm text-[#545149]">
+                    Generate concise styling cues tailored to this piece&apos;s cut and texture.
                   </p>
                   {onRefreshQuickTips && (
                     <button
                       type="button"
                       onClick={onRefreshQuickTips}
-                      className="px-4 py-2 bg-[#141413] text-[#FAF9F6] text-xs font-medium hover:bg-[#2B2A28] cursor-pointer"
+                      className="zine-btn px-4 py-2 bg-[#D4FF38] text-[#111111] text-xs font-mono font-bold uppercase cursor-pointer"
                     >
                       Generate Quick Tips
                     </button>
@@ -401,20 +398,19 @@ export function GarmentDossier({
               )}
             </div>
 
-            {/* Overlay Footer */}
-            <div className="px-6 py-4 bg-white border-t border-[#E5E3DC] flex items-center justify-between gap-3">
+            <div className="px-6 py-4 bg-white border-t-[3px] border-[#111111] flex items-center justify-between gap-3">
               {onRefreshQuickTips ? (
                 <button
                   type="button"
                   disabled={isLoadingQuickTips}
                   onClick={onRefreshQuickTips}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#E5E3DC] bg-[#FAF9F6] text-xs font-medium text-[#141413] hover:border-[#141413] disabled:opacity-50 transition-colors cursor-pointer"
+                  className="zine-btn inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#F6F4EC] text-xs font-mono font-bold uppercase text-[#111111] hover:bg-[#EBE7DA] disabled:opacity-50 cursor-pointer"
                 >
                   <RefreshCw
                     className={`w-3.5 h-3.5 ${isLoadingQuickTips ? 'animate-spin' : ''}`}
-                    strokeWidth={1.5}
+                    strokeWidth={2.2}
                   />
-                  <span>{isLoadingQuickTips ? 'Refreshing...' : 'Refresh Tips'}</span>
+                  <span>{isLoadingQuickTips ? 'Refreshing...' : 'Remix Tips'}</span>
                 </button>
               ) : (
                 <span />
@@ -423,9 +419,9 @@ export function GarmentDossier({
               <button
                 type="button"
                 onClick={() => setIsQuickTipsOpen(false)}
-                className="px-5 py-2 bg-[#141413] text-[#FAF9F6] text-xs font-medium hover:bg-[#2B2A28] transition-colors cursor-pointer"
+                className="zine-btn px-5 py-2 bg-[#D4FF38] text-[#111111] text-xs font-mono font-bold uppercase cursor-pointer"
               >
-                Done
+                Got It
               </button>
             </div>
           </div>

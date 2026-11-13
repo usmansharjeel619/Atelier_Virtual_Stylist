@@ -6,6 +6,7 @@ import {
   Columns2,
   Download,
   LayoutGrid,
+  Pencil,
   RefreshCw,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ interface LookTriptychProps {
   savingLookId: string | null;
   onRetryFlatLay: (lookId: string) => void;
   onOpenRefine: (look: GeneratedLookState) => void;
+  onOpenInEditor: (look: GeneratedLookState) => void;
   onSaveLook: (look: GeneratedLookState) => void;
 }
 
@@ -58,10 +60,10 @@ function OutfitPaletteBar({ look }: { look: GeneratedLookState }) {
 
   return (
     <div
-      className="border-b border-[#E5E3DC] bg-[#FAF9F6]"
+      className="border-b-[3px] border-[#111111] bg-[#F6F4EC]"
       aria-label={`Dominant outfit colors for ${look.title}`}
     >
-      <div className="flex h-3 w-full border-b border-[#E5E3DC] divide-x divide-black/10">
+      <div className="flex h-4 w-full border-b-[3px] border-[#111111] divide-x-2 divide-[#111111]">
         {swatches.map((swatch, idx) => (
           <div
             key={`${swatch.hex}-${idx}`}
@@ -71,23 +73,23 @@ function OutfitPaletteBar({ look }: { look: GeneratedLookState }) {
           />
         ))}
       </div>
-      <div className="px-4 md:px-6 py-2 flex items-center justify-between gap-2 text-[11px] text-[#68665F]">
-        <span className="font-mono uppercase tracking-wider shrink-0">
+      <div className="px-4 md:px-5 py-2 flex items-center justify-between gap-2 text-[11px] font-mono text-[#545149]">
+        <span className="font-bold uppercase tracking-wider text-[#111111] shrink-0">
           Palette
         </span>
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           {swatches.slice(0, 4).map((swatch, idx) => (
             <span
               key={`hex-${swatch.hex}-${idx}`}
-              className="inline-flex items-center gap-1 font-mono tabular-nums truncate"
+              className="inline-flex items-center gap-1 tabular-nums truncate"
               title={swatch.label}
             >
               <span
-                className="w-2.5 h-2.5 border border-black/15 shrink-0"
+                className="w-3 h-3 border-2 border-[#111111] shrink-0"
                 style={{ backgroundColor: swatch.hex }}
                 aria-hidden="true"
               />
-              <span className="hidden sm:inline">{swatch.hex}</span>
+              <span className="hidden sm:inline font-bold text-[#111111]">{swatch.hex}</span>
             </span>
           ))}
         </div>
@@ -96,12 +98,31 @@ function OutfitPaletteBar({ look }: { look: GeneratedLookState }) {
   );
 }
 
+const DROP_ACCENTS = [
+  {
+    cardClass: 'zine-card-lime',
+    badgeClass: 'bg-[#D4FF38] text-[#111111]',
+    tiltClass: '-rotate-2',
+  },
+  {
+    cardClass: 'zine-card-cobalt',
+    badgeClass: 'bg-[#2B4BFF] text-white',
+    tiltClass: 'rotate-1',
+  },
+  {
+    cardClass: 'zine-card-coral',
+    badgeClass: 'bg-[#FF3D6E] text-white',
+    tiltClass: '-rotate-1',
+  },
+];
+
 export function LookTriptych({
   looks,
   garmentTitle,
   savingLookId,
   onRetryFlatLay,
   onOpenRefine,
+  onOpenInEditor,
   onSaveLook,
 }: LookTriptychProps) {
   const [viewMode, setViewMode] = useState<LookViewMode>('triptych');
@@ -188,15 +209,15 @@ export function LookTriptych({
 
   const renderVisualFrame = (look: GeneratedLookState) => (
     <div>
-      <div className="relative aspect-[3/4] w-full bg-[#F4F3EE] border-b border-[#E5E3DC] overflow-hidden">
+      <div className="relative aspect-[3/4] w-full bg-[#EBE7DA] border-b-[3px] border-[#111111] overflow-hidden">
         {look.isGenerating ? (
           <div className="w-full h-full flex flex-col items-center justify-center p-6 md:p-8 text-center">
-            <div className="w-8 h-8 border border-[#141413] border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="font-serif text-lg text-[#141413]">
-              Composing {look.occasion} Flat-Lay
+            <div className="w-10 h-10 border-[3px] border-[#111111] border-t-[#D4FF38] rounded-full animate-spin mb-4" />
+            <p className="font-display text-lg font-extrabold text-[#111111]">
+              Styling {look.occasion} Flat-Lay
             </p>
-            <p className="text-xs text-[#68665F] mt-1">
-              Arranging garments on gallery paper
+            <p className="text-xs font-mono font-bold text-[#545149] mt-1">
+              Composing fit drop...
             </p>
           </div>
         ) : look.imageDataUrl ? (
@@ -207,21 +228,21 @@ export function LookTriptych({
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="w-full h-full flex flex-col justify-between p-5 md:p-6 bg-[#FAF9F6]">
-            <div className="space-y-2">
-              <p className="text-xs font-mono uppercase tracking-wider text-[#8A6A42]">
-                Editorial Piece Board · {look.occasion}
+          <div className="w-full h-full flex flex-col justify-between p-5 md:p-6 bg-[#F6F4EC]">
+            <div className="space-y-2 pt-2">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#2B4BFF]">
+                Fit Recipe · {look.occasion}
               </p>
-              <p className="font-serif text-lg md:text-xl text-[#141413]">
+              <p className="font-display text-lg md:text-xl font-extrabold text-[#111111]">
                 {look.title}
               </p>
             </div>
 
-            <div className="space-y-2 my-3 border-t border-b border-[#E5E3DC] py-3">
+            <div className="space-y-2 my-3 border-t-[3px] border-b-[3px] border-[#111111] py-3">
               {look.pieces.map((piece, pIdx) => (
                 <div key={pIdx} className="flex justify-between gap-2 text-xs">
-                  <span className="text-[#68665F] shrink-0">{piece.slot}</span>
-                  <span className="text-[#141413] font-medium text-right truncate">
+                  <span className="font-mono font-bold text-[#545149] shrink-0">{piece.slot}</span>
+                  <span className="text-[#111111] font-bold text-right truncate">
                     {piece.name}
                   </span>
                 </div>
@@ -230,16 +251,16 @@ export function LookTriptych({
 
             <div className="space-y-3">
               {look.error && (
-                <p className="text-xs text-[#7F1D1D] bg-[#FEF2F2] border border-[#9A3412]/20 p-3 leading-relaxed">
+                <p className="text-xs font-bold text-[#9F1239] bg-[#FFE5EC] border-[3px] border-[#111111] p-3 leading-relaxed">
                   {look.error}
                 </p>
               )}
               <button
                 type="button"
                 onClick={() => onRetryFlatLay(look.id)}
-                className="w-full py-2.5 px-4 border border-[#141413] bg-white text-xs font-medium text-[#141413] hover:bg-[#141413] hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="zine-btn w-full py-2.5 px-4 bg-[#D4FF38] text-xs font-mono font-bold uppercase text-[#111111] flex items-center justify-center gap-2 cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <RefreshCw className="w-3.5 h-3.5" strokeWidth={2.5} />
                 <span>Generate Flat-Lay Photo</span>
               </button>
             </div>
@@ -256,16 +277,26 @@ export function LookTriptych({
     const jpegFilename = `atelier-${look.occasion.toLowerCase().replace(/\s+/g, '-')}-outfit.jpg`;
 
     return (
-      <div className="pt-4 border-t border-[#E5E3DC] space-y-2">
+      <div className="pt-4 border-t-[3px] border-[#111111]/20 space-y-2.5">
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={look.isGenerating}
-            onClick={() => onOpenRefine(look)}
-            className="flex-1 py-2.5 px-3 border border-[#141413] bg-[#141413] text-[#FAF9F6] text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#2B2A28] disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer"
+            onClick={() => onOpenInEditor(look)}
+            className="zine-btn flex-1 py-2.5 px-3 bg-[#D4FF38] text-[#111111] text-xs font-mono font-bold uppercase flex items-center justify-center gap-1.5 disabled:opacity-50 whitespace-nowrap cursor-pointer"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span>Refine Prompt</span>
+            <Pencil className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <span>Open in Editor</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={look.isGenerating}
+            onClick={() => onOpenRefine(look)}
+            className="zine-btn py-2.5 px-3 bg-white text-[#111111] hover:bg-[#D5A8FF] text-xs font-mono font-bold uppercase flex items-center justify-center gap-1.5 disabled:opacity-50 whitespace-nowrap cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={2.2} />
+            <span>Tweak</span>
           </button>
 
           <button
@@ -273,20 +304,21 @@ export function LookTriptych({
             disabled={isSaving || look.isGenerating}
             onClick={() => onSaveLook(look)}
             title={
-              isSaved ? 'Saved to Wardrobe (click to update)' : 'Save to Cloud Wardrobe'
+              isSaved ? 'Saved to Closet (click to update)' : 'Save to Cloud Closet'
             }
-            className={`py-2.5 px-3 border text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+            aria-label={isSaved ? 'Saved to Closet' : 'Save to Cloud Closet'}
+            className={`zine-btn py-2.5 px-3 text-xs font-mono font-bold uppercase flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               isSaved
-                ? 'border-[#8A6A42] bg-[#FAF9F6] text-[#8A6A42]'
-                : 'border-[#E5E3DC] bg-white text-[#141413] hover:border-[#141413]'
+                ? 'bg-[#FF3D6E] text-white'
+                : 'bg-white text-[#111111] hover:bg-[#EBE7DA]'
             }`}
           >
             {isSaved ? (
-              <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <Check className="w-4 h-4" strokeWidth={2.5} />
             ) : (
-              <Bookmark className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <Bookmark className="w-4 h-4" strokeWidth={2.2} />
             )}
-            <span>{isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}</span>
+            <span className="hidden xl:inline">{isSaving ? 'Saving' : isSaved ? 'Saved' : 'Save'}</span>
           </button>
         </div>
 
@@ -295,9 +327,9 @@ export function LookTriptych({
             type="button"
             onClick={() => void triggerJpegDownload(look.imageDataUrl!, jpegFilename)}
             aria-label={`Download Outfit ${look.title} as JPEG`}
-            className="w-full py-2.5 px-3 border border-[#E5E3DC] bg-white text-[#141413] hover:border-[#141413] hover:bg-[#FAF9F6] text-xs font-medium flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"
+            className="w-full py-2.5 px-3 border-[3px] border-[#111111] bg-[#F6F4EC] text-[#111111] hover:bg-[#D4FF38] text-xs font-mono font-bold uppercase flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <Download className="w-3.5 h-3.5" strokeWidth={2.2} />
             <span>Download Outfit</span>
           </button>
         )}
@@ -306,19 +338,18 @@ export function LookTriptych({
   };
 
   return (
-    <section className="max-w-[1280px] mx-auto px-6 md:px-10 py-12">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-8 border-b border-[#E5E3DC]">
-        <div>
-          <p className="text-xs font-mono uppercase tracking-wider text-[#68665F]">
-            Flat-Lay Lookbook
-          </p>
-          <h2 className="font-serif text-3xl md:text-4xl font-medium text-[#141413] mt-1">
-            Three Curated Occasions
+    <section className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 py-12">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-8 border-b-[3px] border-[#111111]">
+        <div className="space-y-2">
+          <span className="inline-block -rotate-2 bg-[#FF6B2C] text-white border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-3 py-0.5 text-xs font-mono font-bold uppercase tracking-wider">
+            3 Occasion Drops
+          </span>
+          <h2 className="font-display text-3xl md:text-5xl font-extrabold text-[#111111]">
+            Curated Fit Lineup
           </h2>
-          <p className="text-sm text-[#68665F] max-w-[54ch] mt-2">
-            Each composition centers your {garmentTitle.toLowerCase()}. Refine any
-            look with natural language prompts, save directly to your cloud
-            wardrobe, or compare two outfits side-by-side.
+          <p className="text-sm font-medium text-[#545149] max-w-[54ch]">
+            Every drop locks in your {garmentTitle.toLowerCase()}. Open any look in the Editor,
+            tweak with natural language prompts, or face two fits off 1v1.
           </p>
         </div>
 
@@ -326,47 +357,46 @@ export function LookTriptych({
           <div
             role="tablist"
             aria-label="Lookbook layout mode"
-            className="inline-flex border border-[#E5E3DC] bg-white p-1 self-start lg:self-auto shrink-0"
+            className="-rotate-1 inline-flex border-[3px] border-[#111111] bg-white p-1.5 gap-1.5 self-start lg:self-auto shrink-0 shadow-[5px_5px_0_#111111]"
           >
             <button
               type="button"
               role="tab"
               aria-selected={viewMode === 'triptych'}
               onClick={() => setViewMode('triptych')}
-              className={`px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 viewMode === 'triptych'
-                  ? 'bg-[#141413] text-[#FAF9F6]'
-                  : 'text-[#68665F] hover:text-[#141413]'
+                  ? 'bg-[#D4FF38] text-[#111111] border-2 border-[#111111]'
+                  : 'text-[#545149] hover:text-[#111111]'
               }`}
             >
-              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Triptych View</span>
+              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={2.5} />
+              <span>Look Drop</span>
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={viewMode === 'compare'}
               onClick={() => setViewMode('compare')}
-              className={`px-3.5 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 viewMode === 'compare'
-                  ? 'bg-[#141413] text-[#FAF9F6]'
-                  : 'text-[#68665F] hover:text-[#141413]'
+                  ? 'bg-[#2B4BFF] text-white border-2 border-[#111111]'
+                  : 'text-[#545149] hover:text-[#111111]'
               }`}
             >
-              <Columns2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Side-by-Side Compare</span>
+              <Columns2 className="w-3.5 h-3.5" strokeWidth={2.5} />
+              <span>Compare 1v1</span>
             </button>
           </div>
         )}
       </div>
 
       {viewMode === 'compare' && canCompare && leftLook && rightLook ? (
-        <div className="pt-8 space-y-6">
-          {/* Comparison Pair Control Bar */}
-          <div className="border border-[#E5E3DC] bg-white p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-[#68665F] shrink-0">
-                Look A
+        <div className="pt-9 space-y-8">
+          <div className="zine-card-cobalt p-4 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2.5">
+              <span className="-rotate-2 inline-block bg-[#D4FF38] text-[#111111] border-2 border-[#111111] px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider shrink-0">
+                Side A
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {looks.map((look, idx) => {
@@ -376,10 +406,10 @@ export function LookTriptych({
                       key={look.id}
                       type="button"
                       onClick={() => handleSelectLeft(look.id)}
-                      className={`px-3 py-1.5 text-xs border transition-colors whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1.5 text-xs font-mono font-bold border-2 border-[#111111] transition-all whitespace-nowrap cursor-pointer ${
                         isActive
-                          ? 'border-[#141413] bg-[#141413] text-[#FAF9F6] font-medium'
-                          : 'border-[#E5E3DC] bg-[#FAF9F6] text-[#141413] hover:border-[#141413]'
+                          ? '-translate-y-0.5 bg-[#D4FF38] text-[#111111] shadow-[3px_3px_0_#111111]'
+                          : 'bg-[#F6F4EC] text-[#111111] hover:bg-[#EBE7DA]'
                       }`}
                     >
                       {String(idx + 1).padStart(2, '0')} · {look.occasion}
@@ -393,15 +423,15 @@ export function LookTriptych({
               type="button"
               onClick={handleSwapPair}
               aria-label="Swap left and right outfits"
-              className="self-center px-3 py-2 border border-[#E5E3DC] bg-[#FAF9F6] text-xs font-medium text-[#141413] hover:border-[#141413] transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+              className="zine-btn self-center px-3.5 py-2 bg-white text-xs font-mono font-bold uppercase text-[#111111] hover:bg-[#D5A8FF] flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
-              <ArrowLeftRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <ArrowLeftRight className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span>Swap</span>
             </button>
 
-            <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-[#68665F] shrink-0">
-                Look B
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5">
+              <span className="rotate-2 inline-block bg-[#FF3D6E] text-white border-2 border-[#111111] px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider shrink-0">
+                Side B
               </span>
               <div className="flex flex-wrap gap-1.5 sm:justify-end">
                 {looks.map((look, idx) => {
@@ -411,10 +441,10 @@ export function LookTriptych({
                       key={look.id}
                       type="button"
                       onClick={() => handleSelectRight(look.id)}
-                      className={`px-3 py-1.5 text-xs border transition-colors whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1.5 text-xs font-mono font-bold border-2 border-[#111111] transition-all whitespace-nowrap cursor-pointer ${
                         isActive
-                          ? 'border-[#141413] bg-[#141413] text-[#FAF9F6] font-medium'
-                          : 'border-[#E5E3DC] bg-[#FAF9F6] text-[#141413] hover:border-[#141413]'
+                          ? '-translate-y-0.5 bg-[#2B4BFF] text-white shadow-[3px_3px_0_#111111]'
+                          : 'bg-[#F6F4EC] text-[#111111] hover:bg-[#EBE7DA]'
                       }`}
                     >
                       {String(idx + 1).padStart(2, '0')} · {look.occasion}
@@ -425,116 +455,127 @@ export function LookTriptych({
             </div>
           </div>
 
-          {/* Side-by-Side Visual & Rationale Columns */}
-          <div className="grid grid-cols-2 gap-3 md:gap-8">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-stretch">
+            {/* Overlapping Center VS Stamp on desktop */}
+            <div
+              aria-hidden="true"
+              className="hidden md:flex absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 z-20 rotate-6 bg-[#D4FF38] text-[#111111] border-[4px] border-[#111111] shadow-[5px_5px_0_#FF3D6E] px-4 py-2 font-display text-2xl font-extrabold uppercase tracking-tight"
+            >
+              VS
+            </div>
+
             {[
-              { label: 'Look A', look: leftLook },
-              { label: 'Look B', look: rightLook },
-            ].map(({ label, look }) => {
+              {
+                label: 'Side A',
+                look: leftLook,
+                cardClass: 'zine-card-lime',
+                badgeBg: 'bg-[#D4FF38] text-[#111111]',
+                tilt: '-rotate-2',
+              },
+              {
+                label: 'Side B',
+                look: rightLook,
+                cardClass: 'zine-card-coral',
+                badgeBg: 'bg-[#FF3D6E] text-white',
+                tilt: 'rotate-2',
+              },
+            ].map(({ label, look, cardClass, badgeBg, tilt }) => {
               const lookIdx = looks.findIndex((l) => l.id === look.id);
-              const indexStr = String((lookIdx >= 0 ? lookIdx : 0) + 1).padStart(
-                2,
-                '0'
-              );
+              const indexStr = String((lookIdx >= 0 ? lookIdx : 0) + 1).padStart(2, '0');
               return (
-                <article
-                  key={`${label}-${look.id}`}
-                  className="flex flex-col border border-[#E5E3DC] bg-white"
-                >
-                  {renderVisualFrame(look)}
-
-                  <div className="p-4 md:p-6 flex-1 flex flex-col justify-between gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2 text-xs text-[#68665F]">
-                        <span className="font-mono tabular-nums truncate">
-                          {label} · {indexStr} · {look.occasion}
-                        </span>
-                        {look.editPromptHistory.length > 0 && (
-                          <span className="font-mono text-[#8A6A42] shrink-0">
-                            v{look.imageHistory.length}
-                          </span>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className="font-serif text-xl md:text-2xl font-medium text-[#141413] leading-snug">
-                          {look.title}
-                        </h3>
-                        <p className="text-xs md:text-sm text-[#68665F] leading-relaxed mt-2">
-                          {look.stylingRationale}
-                        </p>
-                      </div>
-                    </div>
-
-                    {renderActionFooter(look)}
+                <div key={`${label}-${look.id}`} className="relative pt-3 flex">
+                  <div
+                    className={`absolute -top-0.5 left-4 z-10 ${tilt} ${badgeBg} zine-sticker px-3 py-1 text-xs font-mono font-bold uppercase`}
+                  >
+                    {label} · {indexStr} · {look.occasion}
                   </div>
-                </article>
+
+                  <article className={`${cardClass} flex-1 flex flex-col overflow-hidden`}>
+                    {renderVisualFrame(look)}
+
+                    <div className="p-5 md:p-6 flex-1 flex flex-col justify-between gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 text-xs font-mono">
+                          <span className="font-bold uppercase text-[#2B4BFF]">
+                            Head-to-Head Matchup
+                          </span>
+                          {look.editPromptHistory.length > 0 && (
+                            <span className="bg-[#FF3D6E] text-white border-2 border-[#111111] px-2 py-0.5 font-bold shrink-0">
+                              v{look.imageHistory.length}
+                            </span>
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="font-display text-xl md:text-2xl font-extrabold text-[#111111] leading-snug">
+                            {look.title}
+                          </h3>
+                          <p className="text-xs md:text-sm font-medium text-[#545149] leading-relaxed mt-2">
+                            {look.stylingRationale}
+                          </p>
+                        </div>
+                      </div>
+
+                      {renderActionFooter(look)}
+                    </div>
+                  </article>
+                </div>
               );
             })}
           </div>
 
-          {/* Synchronized Piece-by-Piece Comparison Matrix */}
-          <div className="border border-[#E5E3DC] bg-white">
-            <div className="px-6 py-4 border-b border-[#E5E3DC] bg-[#FAF9F6] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <p className="text-[11px] font-mono uppercase tracking-wider text-[#8A6A42]">
-                  Garment Slot Breakdown
-                </p>
-                <h3 className="font-serif text-xl text-[#141413]">
-                  Piece-by-Piece Silhouette Comparison
+          <div className="zine-card-lg overflow-hidden">
+            <div className="px-6 py-4 border-b-[3px] border-[#111111] bg-[#111111] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="space-y-1">
+                <span className="inline-block bg-[#D4FF38] text-[#111111] px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider">
+                  Slot-by-Slot Breakdown
+                </span>
+                <h3 className="font-display text-xl font-extrabold text-white">
+                  Piece-by-Piece Fit Matchup
                 </h3>
               </div>
-              <p className="text-xs text-[#68665F] font-mono tabular-nums">
-                {leftLook.occasion} ({leftLook.pieces.length} pcs) vs{' '}
-                {rightLook.occasion} ({rightLook.pieces.length} pcs)
+              <p className="text-xs text-[#D4FF38] font-mono font-bold tabular-nums">
+                {leftLook.occasion} ({leftLook.pieces.length} pcs) vs {rightLook.occasion} (
+                {rightLook.pieces.length} pcs)
               </p>
             </div>
 
-            <div className="divide-y divide-[#E5E3DC]">
-              <div className="grid grid-cols-12 px-6 py-3 bg-[#FAF9F6]/60 text-[11px] font-mono uppercase tracking-wider text-[#68665F]">
+            <div className="divide-y-2 divide-[#111111]">
+              <div className="grid grid-cols-12 px-6 py-3 bg-[#D5A8FF] text-[11px] font-mono font-bold uppercase tracking-wider text-[#111111]">
                 <div className="col-span-3 md:col-span-2">Slot</div>
-                <div className="col-span-4 md:col-span-5 pr-3">
-                  Look A · {leftLook.occasion}
-                </div>
-                <div className="col-span-5 pl-3 border-l border-[#E5E3DC]">
-                  Look B · {rightLook.occasion}
+                <div className="col-span-4 md:col-span-5 pr-3">Side A · {leftLook.occasion}</div>
+                <div className="col-span-5 pl-3 border-l-2 border-[#111111]">
+                  Side B · {rightLook.occasion}
                 </div>
               </div>
 
               {alignedPieceRows.map(({ slot, leftPiece, rightPiece }) => (
-                <div
-                  key={slot}
-                  className="grid grid-cols-12 px-6 py-3.5 items-start text-xs"
-                >
-                  <div className="col-span-3 md:col-span-2 font-mono text-[#68665F] pr-2">
+                <div key={slot} className="grid grid-cols-12 px-6 py-3.5 items-start text-xs bg-white">
+                  <div className="col-span-3 md:col-span-2 font-mono font-bold text-[#2B4BFF] pr-2 uppercase">
                     {slot}
                   </div>
                   <div className="col-span-4 md:col-span-5 pr-3">
                     {leftPiece ? (
                       <>
-                        <p className="font-medium text-[#141413]">
-                          {leftPiece.name}
-                        </p>
-                        <p className="text-[11px] text-[#68665F] mt-0.5">
+                        <p className="font-bold text-[#111111]">{leftPiece.name}</p>
+                        <p className="text-[11px] font-mono text-[#545149] mt-0.5">
                           {leftPiece.color} · {leftPiece.material}
                         </p>
                       </>
                     ) : (
-                      <p className="text-[#68665F]/60">—</p>
+                      <p className="text-[#545149]/60">—</p>
                     )}
                   </div>
-                  <div className="col-span-5 pl-3 border-l border-[#E5E3DC]">
+                  <div className="col-span-5 pl-3 border-l-2 border-[#111111]">
                     {rightPiece ? (
                       <>
-                        <p className="font-medium text-[#141413]">
-                          {rightPiece.name}
-                        </p>
-                        <p className="text-[11px] text-[#68665F] mt-0.5">
+                        <p className="font-bold text-[#111111]">{rightPiece.name}</p>
+                        <p className="text-[11px] font-mono text-[#545149] mt-0.5">
                           {rightPiece.color} · {rightPiece.material}
                         </p>
                       </>
                     ) : (
-                      <p className="text-[#68665F]/60">—</p>
+                      <p className="text-[#545149]/60">—</p>
                     )}
                   </div>
                 </div>
@@ -543,69 +584,69 @@ export function LookTriptych({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-9">
           {looks.map((look, index) => {
             const indexStr = String(index + 1).padStart(2, '0');
+            const accent = DROP_ACCENTS[index % DROP_ACCENTS.length];
 
             return (
-              <article
-                key={look.id}
-                className="flex flex-col border border-[#E5E3DC] bg-white"
-              >
-                {renderVisualFrame(look)}
-
-                {/* Editorial Copy & Piece List */}
-                <div className="p-6 flex-1 flex flex-col justify-between gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between text-xs text-[#68665F]">
-                      <span className="font-mono tabular-nums">
-                        {indexStr} · {look.occasion}
-                      </span>
-                      {look.editPromptHistory.length > 0 && (
-                        <span className="font-mono text-[#8A6A42]">
-                          Edited · v{look.imageHistory.length}
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className="font-serif text-2xl font-medium text-[#141413] leading-snug">
-                        {look.title}
-                      </h3>
-                      <p className="text-sm text-[#68665F] leading-relaxed mt-2">
-                        {look.stylingRationale}
-                      </p>
-                    </div>
-
-                    {/* Piece Breakdown */}
-                    <div className="border-t border-[#E5E3DC] pt-4 space-y-2.5">
-                      <p className="text-[11px] font-mono uppercase tracking-wider text-[#68665F]">
-                        Outfit Pieces
-                      </p>
-                      <dl className="divide-y divide-[#E5E3DC]/60">
-                        {look.pieces.map((piece, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className="py-2 flex items-baseline justify-between gap-4"
-                          >
-                            <dt className="text-xs text-[#68665F] shrink-0">
-                              {piece.slot}
-                            </dt>
-                            <dd className="text-xs text-[#141413] text-right">
-                              <span className="font-medium">{piece.name}</span>
-                              <span className="block text-[11px] text-[#68665F]">
-                                {piece.color} · {piece.material}
-                              </span>
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                  </div>
-
-                  {renderActionFooter(look)}
+              <div key={look.id} className="relative pt-3 flex">
+                {/* Overlapping Skewed Occasion Sticker */}
+                <div
+                  className={`absolute -top-0.5 left-4 z-10 ${accent.tiltClass} ${accent.badgeClass} zine-sticker px-3 py-1 text-xs font-mono font-bold uppercase tabular-nums`}
+                >
+                  {indexStr} · {look.occasion}
                 </div>
-              </article>
+
+                {look.editPromptHistory.length > 0 && (
+                  <div className="absolute -top-0.5 right-4 z-10 rotate-2 bg-[#111111] text-[#D4FF38] border-[3px] border-[#111111] shadow-[3px_3px_0_#FF3D6E] px-2.5 py-0.5 text-[11px] font-mono font-bold uppercase">
+                    REMIXED · v{look.imageHistory.length}
+                  </div>
+                )}
+
+                <article className={`${accent.cardClass} flex-1 flex flex-col overflow-hidden`}>
+                  {renderVisualFrame(look)}
+
+                  <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-display text-2xl font-extrabold text-[#111111] leading-snug">
+                          {look.title}
+                        </h3>
+                        <p className="text-sm font-medium text-[#545149] leading-relaxed mt-2">
+                          {look.stylingRationale}
+                        </p>
+                      </div>
+
+                      <div className="border-t-[3px] border-[#111111]/20 pt-4 space-y-2.5">
+                        <p className="inline-block bg-[#EBE7DA] border-2 border-[#111111] px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[#111111]">
+                          Pieces in This Fit
+                        </p>
+                        <dl className="divide-y-2 divide-[#111111]/15">
+                          {look.pieces.map((piece, pIdx) => (
+                            <div
+                              key={pIdx}
+                              className="py-2 flex items-baseline justify-between gap-4"
+                            >
+                              <dt className="text-xs font-mono font-bold text-[#2B4BFF] shrink-0">
+                                {piece.slot}
+                              </dt>
+                              <dd className="text-xs text-[#111111] text-right">
+                                <span className="font-bold">{piece.name}</span>
+                                <span className="block text-[11px] font-mono text-[#545149]">
+                                  {piece.color} · {piece.material}
+                                </span>
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    </div>
+
+                    {renderActionFooter(look)}
+                  </div>
+                </article>
+              </div>
             );
           })}
         </div>
@@ -613,4 +654,3 @@ export function LookTriptych({
     </section>
   );
 }
-

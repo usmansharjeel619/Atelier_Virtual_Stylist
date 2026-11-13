@@ -28,7 +28,7 @@ import { GarmentIntake } from './components/GarmentIntake';
 import { GarmentDossier } from './components/GarmentDossier';
 import { LookTriptych } from './components/LookTriptych';
 import { FlatLayEditDrawer } from './components/FlatLayEditDrawer';
-import { FlatLayCanvasView } from './components/FlatLayCanvasView';
+import { EditorSeed, FlatLayCanvasView } from './components/FlatLayCanvasView';
 import { WardrobeView } from './components/WardrobeView';
 
 export default function App() {
@@ -58,6 +58,7 @@ export default function App() {
   const [looks, setLooks] = useState<GeneratedLookState[]>([]);
   const [savingLookId, setSavingLookId] = useState<string | null>(null);
   const [refiningLookId, setRefiningLookId] = useState<string | null>(null);
+  const [editorSeed, setEditorSeed] = useState<EditorSeed | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -508,10 +509,27 @@ export default function App() {
     setActiveTab('studio');
   };
 
+  const handleOpenLookInEditor = (look: GeneratedLookState) => {
+    setEditorSeed({
+      id: `${look.id}-${Date.now()}`,
+      title: look.title || `${look.occasion} Remix`,
+      referenceDataUrl: sourceImageDataUrl,
+      generatedUrl: look.imageDataUrl,
+      history:
+        look.imageHistory.length > 0
+          ? look.imageHistory
+          : look.imageDataUrl
+            ? [look.imageDataUrl]
+            : [],
+      prompts: look.editPromptHistory,
+    });
+    setActiveTab('canvas');
+  };
+
   const refiningLook = looks.find((l) => l.id === refiningLookId) ?? null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#141413]">
+    <div className="min-h-screen flex flex-col zine-bg-grid text-[#111111]">
       <TopBar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -523,7 +541,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-40 max-w-sm border border-[#141413] bg-white px-4 py-3 text-xs text-[#141413] shadow-sm">
+        <div className="fixed bottom-6 right-6 z-40 max-w-sm -rotate-1 border-[3px] border-[#111111] bg-[#D4FF38] shadow-[6px_6px_0_#111111] px-4 py-3 text-xs font-mono font-bold text-[#111111]">
           {toastMessage}
         </div>
       )}
@@ -562,6 +580,7 @@ export default function App() {
                   savingLookId={savingLookId}
                   onRetryFlatLay={handleRetryFlatLay}
                   onOpenRefine={(look) => setRefiningLookId(look.id)}
+                  onOpenInEditor={handleOpenLookInEditor}
                   onSaveLook={handleSaveLook}
                 />
               </>
@@ -570,7 +589,7 @@ export default function App() {
         )}
 
         {activeTab === 'canvas' && (
-          <FlatLayCanvasView onSaveCustomLook={handleSaveCustomLook} />
+          <FlatLayCanvasView seed={editorSeed} onSaveCustomLook={handleSaveCustomLook} />
         )}
 
         {activeTab === 'wardrobe' && (
@@ -583,10 +602,14 @@ export default function App() {
         )}
       </main>
 
-      <footer className="border-t border-[#E5E3DC] bg-white">
-        <div className="max-w-[1280px] mx-auto px-6 md:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#68665F]">
-          <span className="font-serif text-base text-[#141413]">Atelier Virtual Stylist</span>
-          <span>Editorial Wardrobe Analysis · Flat-Lay Studio · Cloud Sync</span>
+      <footer className="border-t-[3px] border-[#111111] bg-white">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#545149]">
+          <span className="-rotate-1 bg-[#D4FF38] border-2 border-[#111111] shadow-[3px_3px_0_#111111] px-3 py-1 font-display text-sm font-extrabold text-[#111111]">
+            ATELIER FIT LAB
+          </span>
+          <span className="font-bold uppercase tracking-wider text-[#111111]">
+            Color DNA · Flat-Lay Editor · Cloud Closet
+          </span>
         </div>
       </footer>
 

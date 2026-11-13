@@ -1,5 +1,6 @@
 package com.atelier.virtualstylist.ui
 
+import android.app.Activity
 import android.app.Application
 import android.content.ContentValues
 import android.graphics.Bitmap
@@ -9,7 +10,6 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.atelier.virtualstylist.BuildConfig
 import com.atelier.virtualstylist.data.model.AnalyzeRequest
 import com.atelier.virtualstylist.data.model.EditFlatLayRequest
 import com.atelier.virtualstylist.data.model.GarmentAnalysis
@@ -22,6 +22,7 @@ import com.atelier.virtualstylist.data.model.SampleGarment
 import com.atelier.virtualstylist.data.model.SavedGarmentRecord
 import com.atelier.virtualstylist.data.model.SavedLookRecord
 import com.atelier.virtualstylist.data.model.StyleBrief
+import com.atelier.virtualstylist.data.network.ServerConfigStore
 import com.atelier.virtualstylist.data.network.StylistApiService
 import com.atelier.virtualstylist.data.repository.WardrobeRepository
 import com.atelier.virtualstylist.util.ImageCodec
@@ -38,11 +39,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class AtelierTab {
-    STUDIO, CANVAS, WARDROBE
+    STUDIO, EDITOR, WARDROBE
 }
 
 data class StudioUiState(
     val activeTab: AtelierTab = AtelierTab.STUDIO,
+    val studioShowResults: Boolean = false,
     val sourceImageDataUrl: String? = null,
     val activeGarmentLabel: String? = null,
     val activeGarmentId: String? = null,
@@ -60,8 +62,13 @@ data class StudioUiState(
     val editError: String? = null,
     val savingLookId: String? = null,
     val toastMessage: String? = null,
-    // Flat-Lay Canvas tab
-    val canvasTitle: String = "Custom Flat-Lay Study",
+    // Server configuration state
+    val serverUrl: String = "",
+    val serverOnline: Boolean? = null,
+    val isCheckingServer: Boolean = false,
+    val showServerDialog: Boolean = false,
+    // Flat-Lay Editor tab
+    val canvasTitle: String = "Custom Fit Remix",
     val canvasReferenceDataUrl: String? = null,
     val canvasGeneratedUrl: String? = null,
     val canvasHistory: List<String> = emptyList(),
@@ -70,6 +77,8 @@ data class StudioUiState(
     val canvasError: String? = null,
     // Wardrobe tab
     val user: FirebaseUser? = null,
+    val isSigningIn: Boolean = false,
+    val authError: String? = null,
     val isFirebaseConfigured: Boolean = false,
     val wardrobeGarments: List<SavedGarmentRecord> = emptyList(),
     val selectedWardrobeGarmentId: String? = null,
@@ -79,12 +88,16 @@ data class StudioUiState(
 
 class StylistViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val api = StylistApiService.create()
+    private var api: StylistApiService =
+        StylistApiService.create(ServerConfigStore.getBaseUrl(application))
     private val repository = WardrobeRepository(application)
     private val gson = Gson()
 
     private val _uiState = MutableStateFlow(
-        StudioUiState(isFirebaseConfigured = repository.isFirebaseConfigured)
+        StudioUiState(
+            isFirebaseConfigured = repository.isFirebaseConfigured,
+            serverUrl = ServerConfigStore.getBaseUrl(application).trimEnd('/')
+        )
     )
     val uiState: StateFlow<StudioUiState> = _uiState.asStateFlow()
 
@@ -93,29 +106,33 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
             id = "sample-patterned-skirt",
             title = "Geometric Pleated Silk Midi Skirt",
             subtitle = "Cobalt · Ochre · Espresso",
-            sampleUrl = "${BuildConfig.API_BASE_URL}/api/samples/sample_patterned_skirt_1794515920648.jpg",
+            sampleUrl = "samples/sample_patterned_skirt_1794515920648.jpg",
+            assetPath = "samples/sample_patterned_skirt_1794515920648.jpg",
             defaultSeason = "Year-Round"
         ),
         SampleGarment(
             id = "sample-emerald-blazer",
             title = "Emerald Jacquard Satin-Lapel Blazer",
             subtitle = "Emerald · Onyx · Tortoise",
-            sampleUrl = "${BuildConfig.API_BASE_URL}/api/samples/sample_emerald_blazer_1794515920362.jpg",
+            sampleUrl = "samples/sample_emerald_blazer_1794515920362.jpg",
+            assetPath = "samples/sample_emerald_blazer_1794515920362.jpg",
             defaultSeason = "Autumn/Winter"
         ),
         SampleGarment(
             id = "sample-tartan-trousers",
             title = "Rust & Navy Tartan Pleated Trousers",
             subtitle = "Rust · Navy · Cream",
-            sampleUrl = "${BuildConfig.API_BASE_URL}/api/samples/sample_tartan_trousers_1794515921817.jpg",
+            sampleUrl = "samples/sample_tartan_trousers_1794515921817.jpg",
+            assetPath = "samples/sample_tartan_trousers_1794515921817.jpg",
             defaultSeason = "Autumn/Winter"
         )
     )
 
     init {
         viewModelScope.launch {
+            runCatching { repository.checkPendingOAuthResult() }
             repository.observeAuthUser().collect { user ->
-                _uiState.update { it.copy(user = user) }
+                _uiState.update { it.copy(user = user, isSigningIn = false) }
                 if (user != null) {
                     observeWardrobe(user.uid)
                 } else {
@@ -128,6 +145,40 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                     }
                 }
             }
+        }
+        checkServerHealth()
+    }
+
+    fun openServerDialog() {
+        _uiState.update { it.copy(showServerDialog = true) }
+    }
+
+    fun closeServerDialog() {
+        _uiState.update { it.copy(showServerDialog = false) }
+    }
+
+    fun updateAndCheckServerUrl(rawUrl: String) {
+        val clean = ServerConfigStore.setBaseUrl(getApplication(), rawUrl)
+        api = StylistApiService.create(clean)
+        _uiState.update { it.copy(serverUrl = clean.trimEnd('/'), showServerDialog = false) }
+        checkServerHealth()
+    }
+
+    fun resetServerUrl() {
+        val clean = ServerConfigStore.resetBaseUrl(getApplication())
+        api = StylistApiService.create(clean)
+        _uiState.update { it.copy(serverUrl = clean.trimEnd('/')) }
+        checkServerHealth()
+    }
+
+    fun checkServerHealth() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCheckingServer = true) }
+            val ok = runCatching {
+                val res = api.healthCheck()
+                res.isSuccessful && res.body()?.ok == true
+            }.getOrDefault(false)
+            _uiState.update { it.copy(isCheckingServer = false, serverOnline = ok) }
         }
     }
 
@@ -172,6 +223,10 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(activeTab = tab) }
     }
 
+    fun setStudioShowResults(show: Boolean) {
+        _uiState.update { it.copy(studioShowResults = show) }
+    }
+
     fun clearToast() {
         _uiState.update { it.copy(toastMessage = null) }
     }
@@ -190,8 +245,9 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                 val encoded = ImageCodec.encodeUri(getApplication(), uri)
                 _uiState.update {
                     it.copy(
+                        studioShowResults = false,
                         sourceImageDataUrl = encoded.dataUrl,
-                        activeGarmentLabel = "Uploaded Garment",
+                        activeGarmentLabel = "Uploaded Piece",
                         activeGarmentId = null,
                         analysis = null,
                         looks = emptyList(),
@@ -208,9 +264,10 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             _uiState.update { it.copy(analyzeError = null) }
             runCatching {
-                val encoded = ImageCodec.fetchAndEncodeUrl(sample.sampleUrl)
+                val encoded = ImageCodec.loadAssetAndEncode(getApplication(), sample.assetPath)
                 _uiState.update {
                     it.copy(
+                        studioShowResults = false,
                         sourceImageDataUrl = encoded.dataUrl,
                         activeGarmentLabel = sample.title,
                         activeGarmentId = null,
@@ -228,6 +285,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
     fun clearPiece() {
         _uiState.update {
             it.copy(
+                studioShowResults = false,
                 sourceImageDataUrl = null,
                 activeGarmentLabel = null,
                 activeGarmentId = null,
@@ -266,7 +324,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
 
                 if (!response.isSuccessful || response.body() == null) {
                     val errText = extractServerError(response.errorBody()?.string())
-                    throw IllegalStateException(errText ?: "Garment analysis failed.")
+                    throw IllegalStateException(errText ?: "Garment analysis failed (HTTP ${response.code()}).")
                 }
 
                 val analysis = response.body()!!
@@ -286,6 +344,8 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                 _uiState.update {
                     it.copy(
                         isAnalyzing = false,
+                        studioShowResults = true,
+                        serverOnline = true,
                         analysis = analysis,
                         activeGarmentLabel = analysis.garmentTitle,
                         activeGarmentId = newGarmentId,
@@ -481,6 +541,23 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(refiningLookId = null, editError = null) }
     }
 
+    fun openLookInEditor(look: GeneratedLookState) {
+        val initialHistory = look.imageHistory.ifEmpty {
+            listOfNotNull(look.imageDataUrl)
+        }
+        _uiState.update {
+            it.copy(
+                activeTab = AtelierTab.EDITOR,
+                canvasTitle = look.title.ifBlank { "${look.occasion} Remix" },
+                canvasReferenceDataUrl = it.sourceImageDataUrl,
+                canvasGeneratedUrl = look.imageDataUrl,
+                canvasHistory = initialHistory,
+                canvasPrompts = look.editPromptHistory,
+                canvasError = null
+            )
+        }
+    }
+
     fun applyPromptEdit(prompt: String, aspectRatio: String, imageSize: String) {
         val state = _uiState.value
         val look = state.looks.find { it.id == state.refiningLookId } ?: return
@@ -548,7 +625,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Flat-Lay Canvas operations
+    // Flat-Lay Editor operations
     fun updateCanvasTitle(title: String) {
         _uiState.update { it.copy(canvasTitle = title) }
     }
@@ -582,11 +659,16 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                     state.canvasReferenceDataUrl
                 }
                 val baseSplit = baseUrl?.let { ImageCodec.splitDataUrl(it) }
+                val anchorSplit = state.canvasReferenceDataUrl?.takeIf { editCurrent }?.let {
+                    ImageCodec.splitDataUrl(it)
+                }
 
                 val res = api.editFlatLay(
                     EditFlatLayRequest(
                         baseImageBase64 = baseSplit?.second,
                         baseMimeType = baseSplit?.first ?: "image/jpeg",
+                        sourceGarmentBase64 = anchorSplit?.second,
+                        sourceGarmentMimeType = anchorSplit?.first ?: "image/jpeg",
                         editPrompt = trimmed,
                         aspectRatio = aspectRatio,
                         imageSize = imageSize
@@ -602,6 +684,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                 _uiState.update {
                     it.copy(
                         isCanvasGenerating = false,
+                        serverOnline = true,
                         canvasGeneratedUrl = imgUrl,
                         canvasHistory = it.canvasHistory + imgUrl,
                         canvasPrompts = it.canvasPrompts + trimmed
@@ -630,7 +713,8 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         val sourceUrl = state.sourceImageDataUrl ?: return
 
         if (user == null) {
-            showToast("Sign in on the Wardrobe tab to save outfits to your Cloud Wardrobe.")
+            _uiState.update { it.copy(activeTab = AtelierTab.WARDROBE) }
+            showToast("Sign in on the Closet tab to save outfits to your Cloud Closet.")
             return
         }
 
@@ -654,7 +738,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                         }
                     )
                 }
-                showToast("Saved \"${look.title}\" to Cloud Wardrobe.")
+                showToast("Saved \"${look.title}\" to Cloud Closet.")
             }.onFailure { err ->
                 _uiState.update { it.copy(savingLookId = null) }
                 showToast(err.message ?: "Failed to save look.")
@@ -667,17 +751,18 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         val user = state.user
         val imgUrl = state.canvasGeneratedUrl ?: return
         if (user == null) {
-            showToast("Sign in on the Wardrobe tab to save custom flat-lays.")
+            _uiState.update { it.copy(activeTab = AtelierTab.WARDROBE) }
+            showToast("Sign in on the Closet tab to save custom flat-lays.")
             return
         }
 
-        val promptDesc = state.canvasPrompts.joinToString(" -> ").ifBlank { "Custom flat-lay study" }
+        val promptDesc = state.canvasPrompts.joinToString(" -> ").ifBlank { "Custom flat-lay remix" }
         val customAnalysis = GarmentAnalysis(
-            garmentTitle = state.canvasTitle.ifBlank { "Custom Flat-Lay Study" },
+            garmentTitle = state.canvasTitle.ifBlank { "Custom Fit Remix" },
             category = "Custom Flat-Lay",
-            fabricNotes = "Prompt-composed flat-lay study.",
+            fabricNotes = "Prompt-composed flat-lay remix.",
             styleSummary = promptDesc,
-            palette = listOf(PaletteSwatch(hex = "#141413", name = "Editorial Ink", role = "Primary"))
+            palette = listOf(PaletteSwatch(hex = "#111111", name = "Obsidian Ink", role = "Primary"))
         )
         val customLook = GeneratedLookState(
             id = "custom_${System.currentTimeMillis()}",
@@ -686,7 +771,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
             stylingRationale = promptDesc,
             flatLayDirection = promptDesc,
             pieces = listOf(
-                OutfitPiece("Composition", customAnalysis.garmentTitle, "Curated", "Flat-Lay Canvas")
+                OutfitPiece("Composition", customAnalysis.garmentTitle, "Curated", "Flat-Lay Editor")
             ),
             imageDataUrl = imgUrl,
             imageHistory = listOf(imgUrl),
@@ -703,20 +788,39 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                     sourceImageDataUrl = state.canvasReferenceDataUrl ?: imgUrl,
                     look = customLook
                 )
-                showToast("Saved \"${customAnalysis.garmentTitle}\" to Cloud Wardrobe.")
+                showToast("Saved \"${customAnalysis.garmentTitle}\" to Cloud Closet.")
             }.onFailure { err ->
                 showToast(err.message ?: "Failed to save custom look.")
             }
         }
     }
 
+    fun signInWithGoogleOAuth(activity: Activity) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSigningIn = true, authError = null) }
+            runCatching {
+                repository.signInWithGoogleOAuth(activity)
+                _uiState.update { it.copy(isSigningIn = false, authError = null) }
+                showToast("Signed in to Atelier Cloud Closet.")
+            }.onFailure { err ->
+                val msg = err.message ?: "Google Sign-In failed."
+                _uiState.update { it.copy(isSigningIn = false, authError = msg) }
+                showToast(msg)
+            }
+        }
+    }
+
     fun signInWithGoogleToken(idToken: String) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isSigningIn = true, authError = null) }
             runCatching {
                 repository.signInWithGoogleIdToken(idToken)
-                showToast("Signed in to Atelier Cloud Wardrobe.")
+                _uiState.update { it.copy(isSigningIn = false, authError = null) }
+                showToast("Signed in to Atelier Cloud Closet.")
             }.onFailure { err ->
-                showToast(err.message ?: "Sign-In failed.")
+                val msg = err.message ?: "Google Sign-In failed."
+                _uiState.update { it.copy(isSigningIn = false, authError = msg) }
+                showToast(msg)
             }
         }
     }
@@ -756,6 +860,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update {
             it.copy(
                 activeTab = AtelierTab.STUDIO,
+                studioShowResults = true,
                 sourceImageDataUrl = garment.sourceImageDataUrl,
                 activeGarmentLabel = garment.title,
                 activeGarmentId = garment.id,
@@ -808,7 +913,7 @@ class StylistViewModel(application: Application) : AndroidViewModel(application)
                 resolver.openOutputStream(uri)?.use { out ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
                 }
-                withContext(Dispatchers.Main) { showToast("Saved image to Pictures/AtelierStylist.") }
+                withContext(Dispatchers.Main) { showToast("Saved JPEG to Pictures/AtelierStylist.") }
             }.onFailure { err ->
                 withContext(Dispatchers.Main) { showToast(err.message ?: "Export failed.") }
             }

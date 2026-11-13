@@ -65,6 +65,7 @@ data class SampleGarment(
     val title: String,
     val subtitle: String,
     val sampleUrl: String,
+    val assetPath: String,
     val defaultSeason: String
 )
 

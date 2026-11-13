@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, ArrowRight, RotateCcw } from 'lucide-react';
+import { Upload, Zap, RotateCcw } from 'lucide-react';
 import {
   BudgetTierOption,
   SampleGarment,
@@ -25,6 +25,8 @@ interface GarmentIntakeProps {
 const SEASONS: SeasonOption[] = ['Spring/Summer', 'Autumn/Winter', 'Year-Round'];
 const SILHOUETTES: SilhouetteOption[] = ['Tailored', 'Relaxed', 'Sculptural'];
 const BUDGETS: BudgetTierOption[] = ['Accessible', 'Contemporary', 'Designer'];
+
+const SAMPLE_TILTS = ['-rotate-1', 'rotate-1', '-rotate-1'];
 
 export function GarmentIntake({
   sourceImageDataUrl,
@@ -59,25 +61,30 @@ export function GarmentIntake({
   };
 
   return (
-    <section className="max-w-[1280px] mx-auto px-6 md:px-10 pt-10 pb-12 border-b border-[#E5E3DC]">
+    <section className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 pt-10 pb-14 border-b-[3px] border-[#111111]">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch">
-        {/* Left Column: Editorial Headline, Upload Dropzone & Styling Brief */}
-        <div className="lg:col-span-6 flex flex-col justify-between gap-8">
-          <div className="space-y-4">
-            <p className="text-xs font-mono tracking-widest uppercase text-[#68665F]">
-              Editorial Wardrobe Studio
-            </p>
-            <h1 className="font-serif text-4xl md:text-5xl font-medium tracking-tight leading-[1.08] text-[#141413] text-balance">
-              One Difficult Piece. Three Complete Looks.
-            </h1>
-            <p className="text-base text-[#68665F] leading-relaxed max-w-[54ch]">
-              Upload a photograph of a garment you love but struggle to pair. Atelier extracts its
-              true palette and weave, then composes Casual, Business, and Night Out flat-lay outfits
-              ready to refine with natural language.
-            </p>
+        {/* Left Column: Collage Masthead, Dropzone & Vibe Check */}
+        <div className="lg:col-span-6 flex flex-col justify-between gap-7">
+          <div className="relative pt-3">
+            {/* Overlapping Skewed Cutout Sticker */}
+            <div className="absolute -top-1 left-5 z-10 -rotate-2 bg-[#FF3D6E] text-white border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-widest">
+              Issue 01 · Fit Check
+            </div>
+
+            <div className="bg-[#111111] text-white border-[3px] border-[#111111] shadow-[8px_8px_0_#D4FF38] p-6 sm:p-8 pt-8 space-y-3">
+              <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.0] text-white text-balance">
+                Drop a Bold Piece.{' '}
+                <span className="inline-block bg-[#D4FF38] text-[#111111] px-2 -rotate-1 border-2 border-[#111111]">
+                  Cook 3 Fits.
+                </span>
+              </h1>
+              <p className="text-sm sm:text-base text-[#EBE7DA] leading-relaxed max-w-[50ch]">
+                Upload any hard-to-style garment. Atelier rips its Color DNA and builds Casual,
+                Business, and Night Out flat-lays ready to remix in the Editor.
+              </p>
+            </div>
           </div>
 
-          {/* Upload Zone or Active Garment Controls */}
           <div className="space-y-6">
             <input
               ref={fileInputRef}
@@ -104,24 +111,26 @@ export function GarmentIntake({
                     fileInputRef.current?.click();
                   }
                 }}
-                className={`border border-dashed p-8 text-center transition-colors cursor-pointer bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A6A42] ${
+                className={`relative border-[3px] border-dashed border-[#111111] shadow-[6px_6px_0_#2B4BFF] p-7 text-center transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2B4BFF] ${
                   isDragging
-                    ? 'border-[#141413] bg-[#F4F3EE]'
-                    : 'border-[#C9C6BC] hover:border-[#141413]'
+                    ? 'bg-[#D4FF38] -rotate-1'
+                    : 'bg-white hover:bg-[#D5A8FF]/25 hover:-translate-y-0.5'
                 }`}
               >
-                <Upload className="w-5 h-5 mx-auto mb-3 text-[#141413]" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-[#141413]">
-                  Drop a garment photo here, or browse from your device
+                <div className="w-14 h-14 mx-auto mb-3 bg-[#D4FF38] border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] -rotate-3 flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-[#111111]" strokeWidth={2.5} />
+                </div>
+                <p className="font-display text-xl font-extrabold text-[#111111]">
+                  Drop Your Garment Photo
                 </p>
-                <p className="text-xs text-[#68665F] mt-1">
-                  JPG, PNG, or WebP · Clear lighting on a neutral surface works best
+                <p className="text-xs font-mono font-bold uppercase text-[#545149] mt-1">
+                  JPG · PNG · WebP — Tap or Drag
                 </p>
               </div>
             ) : (
-              <div className="border border-[#E5E3DC] bg-white p-5 flex items-center justify-between gap-4">
+              <div className="relative zine-card-cobalt p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-14 h-16 bg-[#F4F3EE] border border-[#E5E3DC] shrink-0 overflow-hidden">
+                  <div className="w-16 h-20 -rotate-2 bg-[#EBE7DA] border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] shrink-0 overflow-hidden">
                     <img
                       src={sourceImageDataUrl}
                       alt={activeGarmentLabel || 'Selected garment'}
@@ -130,8 +139,10 @@ export function GarmentIntake({
                     />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-mono text-[#68665F]">Selected Anchor Piece</p>
-                    <p className="text-sm font-medium text-[#141413] truncate">
+                    <p className="inline-block bg-[#D4FF38] border-2 border-[#111111] px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-[#111111]">
+                      Anchor Locked
+                    </p>
+                    <p className="font-display text-lg font-extrabold text-[#111111] truncate mt-1">
                       {activeGarmentLabel || 'Uploaded Garment'}
                     </p>
                   </div>
@@ -140,91 +151,94 @@ export function GarmentIntake({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-2 text-xs font-medium border border-[#E5E3DC] text-[#141413] hover:border-[#141413] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    className="zine-btn px-3.5 py-2 text-xs font-mono font-bold uppercase bg-white text-[#111111] hover:bg-[#D4FF38] whitespace-nowrap shrink-0 cursor-pointer"
                   >
-                    Replace
+                    Swap
                   </button>
                   <button
                     type="button"
                     onClick={onClearPiece}
                     aria-label="Reset selected garment"
-                    className="p-2 text-[#68665F] hover:text-[#141413] border border-[#E5E3DC] hover:border-[#141413] transition-colors cursor-pointer"
+                    className="zine-btn p-2 text-[#111111] bg-[#EBE7DA] hover:bg-[#FF3D6E] hover:text-white cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    <RotateCcw className="w-4 h-4" strokeWidth={2.2} />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Styling Brief Preferences */}
-            <div className="border border-[#E5E3DC] bg-white p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#68665F]">
-                  Styling Brief
-                </span>
-                <span className="text-xs text-[#68665F]">
-                  {brief.season} · {brief.silhouette} · {brief.budgetTier}
-                </span>
+            {/* Vibe Check Brief with Overlapping Zine Header */}
+            <div className="relative pt-3">
+              <div className="absolute -top-0.5 right-4 z-10 rotate-1 bg-[#2B4BFF] text-white border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-3 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider">
+                Vibe Check Brief
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs text-[#68665F] mb-1.5">Season</label>
-                  <div className="flex flex-col gap-1">
-                    {SEASONS.map((season) => (
-                      <button
-                        key={season}
-                        type="button"
-                        onClick={() => onChangeBrief({ ...brief, season })}
-                        className={`text-left px-3 py-1.5 text-xs border transition-colors whitespace-nowrap cursor-pointer ${
-                          brief.season === season
-                            ? 'bg-[#141413] text-[#FAF9F6] border-[#141413]'
-                            : 'bg-[#FAF9F6] text-[#141413] border-[#E5E3DC] hover:border-[#141413]'
-                        }`}
-                      >
-                        {season}
-                      </button>
-                    ))}
+              <div className="zine-card p-5 pt-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#545149] mb-2">
+                      Season
+                    </label>
+                    <div className="flex flex-col gap-1.5">
+                      {SEASONS.map((season) => (
+                        <button
+                          key={season}
+                          type="button"
+                          onClick={() => onChangeBrief({ ...brief, season })}
+                          className={`text-left px-3 py-2 text-xs font-bold border-2 border-[#111111] transition-all whitespace-nowrap cursor-pointer ${
+                            brief.season === season
+                              ? '-translate-y-0.5 bg-[#D4FF38] text-[#111111] shadow-[3px_3px_0_#111111]'
+                              : 'bg-[#F6F4EC] text-[#111111] hover:bg-[#EBE7DA]'
+                          }`}
+                        >
+                          {season}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs text-[#68665F] mb-1.5">Silhouette</label>
-                  <div className="flex flex-col gap-1">
-                    {SILHOUETTES.map((silhouette) => (
-                      <button
-                        key={silhouette}
-                        type="button"
-                        onClick={() => onChangeBrief({ ...brief, silhouette })}
-                        className={`text-left px-3 py-1.5 text-xs border transition-colors whitespace-nowrap cursor-pointer ${
-                          brief.silhouette === silhouette
-                            ? 'bg-[#141413] text-[#FAF9F6] border-[#141413]'
-                            : 'bg-[#FAF9F6] text-[#141413] border-[#E5E3DC] hover:border-[#141413]'
-                        }`}
-                      >
-                        {silhouette}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#545149] mb-2">
+                      Silhouette
+                    </label>
+                    <div className="flex flex-col gap-1.5">
+                      {SILHOUETTES.map((silhouette) => (
+                        <button
+                          key={silhouette}
+                          type="button"
+                          onClick={() => onChangeBrief({ ...brief, silhouette })}
+                          className={`text-left px-3 py-2 text-xs font-bold border-2 border-[#111111] transition-all whitespace-nowrap cursor-pointer ${
+                            brief.silhouette === silhouette
+                              ? '-translate-y-0.5 bg-[#FF3D6E] text-white shadow-[3px_3px_0_#111111]'
+                              : 'bg-[#F6F4EC] text-[#111111] hover:bg-[#EBE7DA]'
+                          }`}
+                        >
+                          {silhouette}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs text-[#68665F] mb-1.5">Budget Tier</label>
-                  <div className="flex flex-col gap-1">
-                    {BUDGETS.map((budgetTier) => (
-                      <button
-                        key={budgetTier}
-                        type="button"
-                        onClick={() => onChangeBrief({ ...brief, budgetTier })}
-                        className={`text-left px-3 py-1.5 text-xs border transition-colors whitespace-nowrap cursor-pointer ${
-                          brief.budgetTier === budgetTier
-                            ? 'bg-[#141413] text-[#FAF9F6] border-[#141413]'
-                            : 'bg-[#FAF9F6] text-[#141413] border-[#E5E3DC] hover:border-[#141413]'
-                        }`}
-                      >
-                        {budgetTier}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#545149] mb-2">
+                      Budget
+                    </label>
+                    <div className="flex flex-col gap-1.5">
+                      {BUDGETS.map((budgetTier) => (
+                        <button
+                          key={budgetTier}
+                          type="button"
+                          onClick={() => onChangeBrief({ ...brief, budgetTier })}
+                          className={`text-left px-3 py-2 text-xs font-bold border-2 border-[#111111] transition-all whitespace-nowrap cursor-pointer ${
+                            brief.budgetTier === budgetTier
+                              ? '-translate-y-0.5 bg-[#2B4BFF] text-white shadow-[3px_3px_0_#111111]'
+                              : 'bg-[#F6F4EC] text-[#111111] hover:bg-[#EBE7DA]'
+                          }`}
+                        >
+                          {budgetTier}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -233,7 +247,7 @@ export function GarmentIntake({
             {analyzeError && (
               <div
                 role="alert"
-                className="border border-[#9A3412]/30 bg-[#FEF2F2] px-4 py-3 text-xs text-[#7F1D1D]"
+                className="border-[3px] border-[#111111] bg-[#FFE5EC] shadow-[5px_5px_0_#FF3D6E] px-4 py-3 text-xs font-bold text-[#9F1239]"
               >
                 {analyzeError}
               </div>
@@ -243,69 +257,79 @@ export function GarmentIntake({
               type="button"
               disabled={!sourceImageDataUrl || isAnalyzing}
               onClick={onAnalyzeAndStyle}
-              className="w-full py-3.5 px-6 bg-[#141413] text-[#FAF9F6] text-sm font-medium flex items-center justify-center gap-2.5 hover:bg-[#2B2A28] disabled:bg-[#D8D5CC] disabled:text-[#68665F] disabled:cursor-not-allowed transition-colors cursor-pointer"
+              className="zine-btn w-full py-4 px-6 bg-[#D4FF38] text-[#111111] font-display text-lg font-extrabold uppercase tracking-wide flex items-center justify-center gap-2.5 disabled:bg-[#EBE7DA] disabled:text-[#545149] disabled:shadow-none disabled:cursor-not-allowed cursor-pointer"
             >
-              <span>{isAnalyzing ? 'Analyzing Palette & Composing Looks...' : 'Analyze & Style 3 Outfits'}</span>
-              {!isAnalyzing && <ArrowRight className="w-4 h-4" strokeWidth={1.5} />}
+              <Zap className="w-5 h-5 fill-current" strokeWidth={2.5} />
+              <span>{isAnalyzing ? 'Cooking 3 Fits...' : 'Cook 3 Outfits'}</span>
             </button>
           </div>
         </div>
 
-        {/* Right Column: Hero Flat-Lay Showcase or Active Garment Preview + Curated Sample Pieces */}
-        <div className="lg:col-span-6 flex flex-col justify-between gap-6">
-          <div className="border border-[#E5E3DC] bg-white p-4 flex-1 flex flex-col">
-            <div className="relative w-full aspect-[4/3] bg-[#F4F3EE] overflow-hidden border border-[#E5E3DC]">
-              <img
-                src={sourceImageDataUrl || HERO_FLATLAY_IMAGE}
-                alt={
-                  sourceImageDataUrl
-                    ? activeGarmentLabel || 'Uploaded garment preview'
-                    : 'Editorial flat-lay outfit on gallery alabaster paper'
-                }
-                className={`w-full h-full ${sourceImageDataUrl ? 'object-contain bg-white p-4' : 'object-cover'}`}
-                referrerPolicy="no-referrer"
-              />
+        {/* Right Column: Overlapping Zine Showcase Frame + Skewed Sample Starters */}
+        <div className="lg:col-span-6 flex flex-col justify-between gap-8">
+          <div className="relative pt-2">
+            {/* Overlapping Top-Right Zine Tape Stamp */}
+            <div className="absolute -top-1 right-6 z-10 rotate-2 bg-[#D4FF38] border-[3px] border-[#111111] shadow-[4px_4px_0_#111111] px-3 py-1 font-mono text-xs font-bold uppercase text-[#111111]">
+              {sourceImageDataUrl ? 'Locked In' : '3 Occasion Drops'}
             </div>
-            <div className="pt-3 flex items-center justify-between text-xs text-[#68665F]">
-              <span className="font-serif italic text-sm text-[#141413]">
-                {sourceImageDataUrl
-                  ? activeGarmentLabel || 'Studio Input Piece'
-                  : 'Fig. 01 — Overhead Flat-Lay Composition Study'}
-              </span>
-              <span className="font-mono">
-                {sourceImageDataUrl ? 'Ready for Analysis' : 'Gallery Linen · 3 Looks'}
-              </span>
+
+            <div className="zine-card-lg p-4 sm:p-5 flex-1 flex flex-col bg-white">
+              <div className="relative w-full aspect-[4/3] bg-[#EBE7DA] overflow-hidden border-[3px] border-[#111111]">
+                <img
+                  src={sourceImageDataUrl || HERO_FLATLAY_IMAGE}
+                  alt={
+                    sourceImageDataUrl
+                      ? activeGarmentLabel || 'Uploaded garment preview'
+                      : 'Editorial flat-lay outfit on chalk paper'
+                  }
+                  className={`w-full h-full ${sourceImageDataUrl ? 'object-contain bg-white p-4' : 'object-cover'}`}
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="pt-4 flex items-center justify-between gap-3">
+                <span className="font-display font-extrabold text-base text-[#111111] truncate">
+                  {sourceImageDataUrl
+                    ? activeGarmentLabel || 'Studio Anchor Piece'
+                    : 'Overhead Flat-Lay Fit Lab'}
+                </span>
+                <span className="-rotate-1 bg-[#111111] text-white px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase whitespace-nowrap">
+                  {sourceImageDataUrl ? 'Ready' : 'Vol. 01'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Curated Hard-to-Style Sample Starters */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-mono uppercase tracking-wider text-[#68665F]">
-                Or Test With a Curated Difficult Piece
-              </p>
-              <span className="text-xs text-[#68665F]">One-click load</span>
+              <span className="-rotate-1 inline-block bg-[#D5A8FF] border-[3px] border-[#111111] shadow-[3px_3px_0_#111111] px-3 py-1 text-xs font-mono font-bold uppercase tracking-wider text-[#111111]">
+                Instant Sample Drops
+              </span>
+              <span className="text-xs font-mono font-bold uppercase text-[#545149]">
+                Tap to load
+              </span>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              {SAMPLE_GARMENTS.map((sample) => (
+            <div className="grid grid-cols-3 gap-4 sm:gap-5 pt-1">
+              {SAMPLE_GARMENTS.map((sample, idx) => (
                 <button
                   key={sample.id}
                   type="button"
                   onClick={() => onSelectSample(sample)}
-                  className="group text-left border border-[#E5E3DC] bg-white p-2.5 hover:border-[#141413] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A6A42]"
+                  className={`group zine-card ${SAMPLE_TILTS[idx % SAMPLE_TILTS.length]} hover:rotate-0 text-left p-2.5 hover:bg-[#D4FF38] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2B4BFF]`}
                 >
-                  <div className="aspect-[3/4] w-full bg-[#FAF9F6] overflow-hidden mb-2 border border-[#E5E3DC]/60">
+                  <div className="aspect-[3/4] w-full bg-[#F6F4EC] overflow-hidden mb-2.5 border-[3px] border-[#111111]">
                     <img
                       src={sample.imagePath}
                       alt={sample.title}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-200"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <p className="text-xs font-medium text-[#141413] leading-snug line-clamp-2">
+                  <p className="font-display text-xs font-extrabold text-[#111111] leading-snug line-clamp-2">
                     {sample.title}
                   </p>
-                  <p className="text-[11px] text-[#68665F] mt-0.5 truncate">{sample.subtitle}</p>
+                  <p className="text-[11px] font-mono font-bold text-[#545149] mt-0.5 truncate">
+                    {sample.subtitle}
+                  </p>
                 </button>
               ))}
             </div>

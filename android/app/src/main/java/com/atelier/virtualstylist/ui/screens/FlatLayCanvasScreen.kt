@@ -11,26 +11,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,21 +42,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.atelier.virtualstylist.ui.StudioUiState
 import com.atelier.virtualstylist.ui.components.AtelierIcons
-import com.atelier.virtualstylist.ui.theme.GalleryBorder
+import com.atelier.virtualstylist.ui.theme.AtelierSurfaceCard
+import com.atelier.virtualstylist.ui.theme.CardShape
 import com.atelier.virtualstylist.ui.theme.GalleryBrass
 import com.atelier.virtualstylist.ui.theme.GalleryCard
 import com.atelier.virtualstylist.ui.theme.GalleryErrorBg
 import com.atelier.virtualstylist.ui.theme.GalleryErrorInk
+import com.atelier.virtualstylist.ui.theme.GalleryHairline
 import com.atelier.virtualstylist.ui.theme.GalleryInk
 import com.atelier.virtualstylist.ui.theme.GalleryMuted
 import com.atelier.virtualstylist.ui.theme.GalleryPaper
 import com.atelier.virtualstylist.ui.theme.GalleryStone
+import com.atelier.virtualstylist.ui.theme.HotCoral
+import com.atelier.virtualstylist.ui.theme.InnerShape
+import com.atelier.virtualstylist.ui.theme.NeonLime
+import com.atelier.virtualstylist.ui.theme.PillShape
 import com.atelier.virtualstylist.util.ImageCodec
 
 @Composable
@@ -70,6 +81,8 @@ fun FlatLayCanvasScreen(
     var prompt by remember { mutableStateOf("") }
     var aspectRatio by remember { mutableStateOf("3:4") }
     var imageSize by remember { mutableStateOf("1K") }
+    var showOriginal by remember { mutableStateOf(false) }
+    var showOptions by remember { mutableStateOf(false) }
 
     val picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -77,320 +90,372 @@ fun FlatLayCanvasScreen(
         if (uri != null) onPickReferenceUri(uri)
     }
 
-    val starters = listOf(
-        "Minimalist Parisian autumn flat-lay: oversized camel cashmere coat, crisp white poplin shirt, raw indigo denim, espresso loafers on warm alabaster paper",
-        "Gallery night-out flat-lay: black silk slip dress, silver metallic heels, sculptural onyx clutch, crystal drop earrings on pale limestone"
+    val quickMoves = listOf(
+        "Silver sneakers" to "Swap shoes for chunky silver sneakers",
+        "Leather moto" to "Add oversized boxy leather moto jacket",
+        "Steel floor" to "Change background to brushed steel and concrete",
+        "Oval shades" to "Add oval tinted sunglasses and chrome mini bag"
     )
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(GalleryPaper)
+            .background(GalleryPaper),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            // Visual Canvas First
+            AtelierSurfaceCard(
+                containerColor = GalleryCard,
+                borderColor = GalleryHairline,
+                shape = CardShape
             ) {
-                Text("DIRECT IMAGE CREATION & EDITING", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                Text("Flat-Lay Prompt Canvas", style = MaterialTheme.typography.displaySmall, color = GalleryInk)
-                Text(
-                    "Compose original flat-lay outfits from text prompts or upload a reference piece to refine with gemini-nano-banana-2.1.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = GalleryMuted
-                )
+                Column {
+                    val activeUrl = if (showOriginal && state.canvasHistory.isNotEmpty()) {
+                        state.canvasHistory.first()
+                    } else {
+                        state.canvasGeneratedUrl
+                    }
 
-                // Canvas Output Preview
-                Surface(
-                    color = GalleryCard,
-                    border = BorderStroke(1.dp, GalleryBorder),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(3f / 4f)
-                                .background(GalleryStone),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            when {
-                                state.isCanvasGenerating -> {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
-                                        Text("Composing on Gallery Paper", style = MaterialTheme.typography.headlineSmall)
-                                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(3f / 3.8f)
+                            .background(GalleryStone),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            state.isCanvasGenerating -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
+                                    Text("Rendering...", style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+
+                            activeUrl != null -> {
+                                val bmp = remember(activeUrl) {
+                                    ImageCodec.decodeDataUrlToBitmap(activeUrl)
+                                }
+                                if (bmp != null) {
+                                    Image(
+                                        bitmap = bmp.asImageBitmap(),
+                                        contentDescription = state.canvasTitle,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
                                 }
 
-                                state.canvasGeneratedUrl != null -> {
-                                    val bmp = remember(state.canvasGeneratedUrl) {
-                                        ImageCodec.decodeDataUrlToBitmap(state.canvasGeneratedUrl)
+                                // Top overlaid action pills
+                                Row(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (state.canvasHistory.size > 1) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(PillShape)
+                                                .background(if (showOriginal) NeonLime else GalleryCard.copy(alpha = 0.92f))
+                                                .clickable { showOriginal = !showOriginal }
+                                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                        ) {
+                                            Text(
+                                                if (showOriginal) "Original" else "Compare v1",
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                        }
                                     }
-                                    if (bmp != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(GalleryCard.copy(alpha = 0.92f))
+                                            .clickable {
+                                                onExportImage(
+                                                    activeUrl,
+                                                    state.canvasTitle.lowercase().replace(Regex("[^a-z0-9]+"), "-")
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(AtelierIcons.Download, contentDescription = "Export", tint = GalleryInk, modifier = Modifier.size(18.dp))
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(HotCoral)
+                                            .clickable { onSaveToCloud() },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(AtelierIcons.BookmarkBorder, contentDescription = "Save", tint = Color.White, modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+
+                            else -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(24.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(NeonLime),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(AtelierIcons.Edit, contentDescription = null, tint = GalleryInk)
+                                    }
+                                    Text("Remix & Edit Studio", style = MaterialTheme.typography.headlineSmall)
+                                    Text(
+                                        "Pick a move below or type any change.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = GalleryMuted
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (state.canvasHistory.size > 1) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            itemsIndexed(state.canvasHistory) { idx, url ->
+                                val thumb = remember(url) { ImageCodec.decodeDataUrlToBitmap(url) }
+                                val isCurrent = state.canvasGeneratedUrl == url
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .border(
+                                            if (isCurrent) 2.dp else 1.dp,
+                                            if (isCurrent) GalleryBrass else GalleryHairline,
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable {
+                                            showOriginal = false
+                                            onSelectVersion(url)
+                                        }
+                                ) {
+                                    if (thumb != null) {
                                         Image(
-                                            bitmap = bmp.asImageBitmap(),
-                                            contentDescription = state.canvasTitle,
-                                            contentScale = ContentScale.Fit,
+                                            bitmap = thumb.asImageBitmap(),
+                                            contentDescription = "v${idx + 1}",
+                                            contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
                                 }
-
-                                else -> {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                                        modifier = Modifier.padding(24.dp)
-                                    ) {
-                                        Text("Blank Gallery Paper", style = MaterialTheme.typography.headlineSmall)
-                                        Text(
-                                            "Enter a prompt below or attach a reference photo to begin.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = GalleryMuted
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (state.canvasGeneratedUrl != null) {
-                            HorizontalDivider(color = GalleryBorder)
-                            if (state.canvasHistory.size > 1) {
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(12.dp)
-                                ) {
-                                    itemsIndexed(state.canvasHistory) { idx, url ->
-                                        val thumb = remember(url) { ImageCodec.decodeDataUrlToBitmap(url) }
-                                        Box(
-                                            modifier = Modifier
-                                                .size(50.dp)
-                                                .border(
-                                                    if (state.canvasGeneratedUrl == url) 2.dp else 1.dp,
-                                                    if (state.canvasGeneratedUrl == url) GalleryInk else GalleryBorder
-                                                )
-                                                .clickable { onSelectVersion(url) }
-                                        ) {
-                                            if (thumb != null) {
-                                                Image(
-                                                    bitmap = thumb.asImageBitmap(),
-                                                    contentDescription = "Version ${idx + 1}",
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier.fillMaxSize()
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        onExportImage(
-                                            state.canvasGeneratedUrl,
-                                            state.canvasTitle.lowercase().replace(Regex("[^a-z0-9]+"), "-")
-                                        )
-                                    },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, GalleryBorder),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(AtelierIcons.Download, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.size(6.dp))
-                                    Text("Export")
-                                }
-                                Button(
-                                    onClick = onSaveToCloud,
-                                    shape = RectangleShape,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = GalleryInk,
-                                        contentColor = GalleryPaper
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(AtelierIcons.BookmarkBorder, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.size(6.dp))
-                                    Text("Save Look")
-                                }
                             }
                         }
                     }
                 }
+            }
+        }
 
-                // Controls Card
-                Surface(
-                    color = GalleryCard,
-                    border = BorderStroke(1.dp, GalleryBorder),
-                    modifier = Modifier.fillMaxWidth()
+        item {
+            // Horizontal Quick Remix Chips
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(quickMoves) { (chipLabel, fullPrompt) ->
+                    val picked = prompt == fullPrompt
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(if (picked) NeonLime else GalleryCard)
+                            .border(1.5.dp, if (picked) GalleryInk else GalleryHairline, PillShape)
+                            .clickable { prompt = fullPrompt }
+                            .padding(horizontal = 14.dp, vertical = 9.dp)
+                    ) {
+                        Text("+ $chipLabel", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
+                    }
+                }
+            }
+        }
+
+        item {
+            AtelierSurfaceCard(
+                containerColor = GalleryCard,
+                borderColor = GalleryHairline,
+                shape = CardShape
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = prompt,
+                        onValueChange = { prompt = it },
+                        label = {
+                            Text(
+                                if (state.canvasGeneratedUrl != null) "What should we change?"
+                                else "Describe your outfit"
+                            )
+                        },
+                        minLines = 2,
+                        shape = InnerShape,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Collapsible Options Bar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(PillShape)
+                                    .background(if (state.canvasReferenceDataUrl != null) NeonLime else GalleryPaper)
+                                    .border(1.dp, GalleryHairline, PillShape)
+                                    .clickable {
+                                        if (state.canvasReferenceDataUrl == null) {
+                                            picker.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        } else {
+                                            onClearReference()
+                                        }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 7.dp)
+                            ) {
+                                Text(
+                                    if (state.canvasReferenceDataUrl != null) "Photo Attached ✕" else "+ Attach Photo",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(PillShape)
+                                    .background(if (showOptions) GalleryInk else GalleryPaper)
+                                    .border(1.dp, GalleryHairline, PillShape)
+                                    .clickable { showOptions = !showOptions }
+                                    .padding(horizontal = 12.dp, vertical = 7.dp)
+                            ) {
+                                Text(
+                                    "$aspectRatio · $imageSize",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (showOptions) NeonLime else GalleryInk
+                                )
+                            }
+                        }
+                    }
+
+                    if (showOptions) {
                         OutlinedTextField(
                             value = state.canvasTitle,
                             onValueChange = onUpdateTitle,
-                            label = { Text("Look Title") },
+                            label = { Text("Look Name") },
                             singleLine = true,
+                            shape = InnerShape,
                             modifier = Modifier.fillMaxWidth()
                         )
-
-                        if (state.canvasReferenceDataUrl == null) {
-                            OutlinedButton(
-                                onClick = {
-                                    picker.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
-                                shape = RectangleShape,
-                                border = BorderStroke(1.dp, GalleryBorder),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(AtelierIcons.AddPhoto, contentDescription = null, modifier = Modifier.padding(end = 6.dp))
-                                Text("Attach Optional Reference Photo")
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf("3:4", "1:1", "4:3", "9:16")) { ratio ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(PillShape)
+                                        .background(if (aspectRatio == ratio) NeonLime else GalleryPaper)
+                                        .border(1.dp, GalleryHairline, PillShape)
+                                        .clickable { aspectRatio = ratio }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(ratio, style = MaterialTheme.typography.labelMedium)
+                                }
                             }
-                        } else {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(1.dp, GalleryBorder)
-                                    .padding(10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Reference image attached", style = MaterialTheme.typography.bodyMedium)
-                                IconButton(onClick = onClearReference) {
-                                    Icon(AtelierIcons.Delete, contentDescription = "Remove reference")
+                            items(listOf("1K", "2K")) { sz ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(PillShape)
+                                        .background(if (imageSize == sz) GalleryBrass else GalleryPaper)
+                                        .border(1.dp, GalleryHairline, PillShape)
+                                        .clickable { imageSize = sz }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(sz, style = MaterialTheme.typography.labelMedium, color = if (imageSize == sz) Color.White else GalleryInk)
                                 }
                             }
                         }
+                    }
 
-                        OutlinedTextField(
-                            value = prompt,
-                            onValueChange = { prompt = it },
-                            label = {
-                                Text(
-                                    if (state.canvasGeneratedUrl != null) "Follow-up edit or new prompt"
-                                    else "Describe garments, colors, and gallery surface"
-                                )
-                            },
-                            minLines = 3,
-                            modifier = Modifier.fillMaxWidth()
+                    if (!state.canvasError.isNullOrBlank()) {
+                        Text(
+                            text = state.canvasError,
+                            color = GalleryErrorInk,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(InnerShape)
+                                .background(GalleryErrorBg)
+                                .padding(10.dp)
                         )
+                    }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf("3:4", "1:1", "4:3").forEach { ratio ->
-                                OutlinedButton(
-                                    onClick = { aspectRatio = ratio },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, if (aspectRatio == ratio) GalleryInk else GalleryBorder),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (aspectRatio == ratio) GalleryInk else GalleryPaper,
-                                        contentColor = if (aspectRatio == ratio) GalleryPaper else GalleryInk
-                                    )
-                                ) {
-                                    Text(ratio)
-                                }
-                            }
-                            listOf("1K", "2K").forEach { sz ->
-                                OutlinedButton(
-                                    onClick = { imageSize = sz },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, if (imageSize == sz) GalleryInk else GalleryBorder),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (imageSize == sz) GalleryInk else GalleryPaper,
-                                        contentColor = if (imageSize == sz) GalleryPaper else GalleryInk
-                                    )
-                                ) {
-                                    Text(sz)
-                                }
-                            }
-                        }
-
-                        if (!state.canvasError.isNullOrBlank()) {
-                            Text(
-                                text = state.canvasError,
-                                color = GalleryErrorInk,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(GalleryErrorBg)
-                                    .padding(10.dp)
-                            )
-                        }
-
-                        if (state.canvasGeneratedUrl != null) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(
-                                    onClick = {
-                                        onGenerate(prompt, true, aspectRatio, imageSize)
-                                        prompt = ""
-                                    },
-                                    enabled = prompt.isNotBlank() && !state.isCanvasGenerating,
-                                    shape = RectangleShape,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = GalleryInk,
-                                        contentColor = GalleryPaper
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Edit Flat-Lay")
-                                }
-                                OutlinedButton(
-                                    onClick = {
-                                        onGenerate(prompt, false, aspectRatio, imageSize)
-                                        prompt = ""
-                                    },
-                                    enabled = prompt.isNotBlank() && !state.isCanvasGenerating,
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, GalleryInk)
-                                ) {
-                                    Text("New")
-                                }
-                            }
-                        } else {
+                    if (state.canvasGeneratedUrl != null) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = {
+                                    showOriginal = false
+                                    onGenerate(prompt, true, aspectRatio, imageSize)
+                                    prompt = ""
+                                },
+                                enabled = prompt.isNotBlank() && !state.isCanvasGenerating,
+                                shape = PillShape,
+                                colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = GalleryInk),
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .height(48.dp)
+                            ) {
+                                Text("Apply Edit", fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    showOriginal = false
                                     onGenerate(prompt, false, aspectRatio, imageSize)
                                     prompt = ""
                                 },
                                 enabled = prompt.isNotBlank() && !state.isCanvasGenerating,
-                                shape = RectangleShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = GalleryInk,
-                                    contentColor = GalleryPaper
-                                ),
-                                modifier = Modifier.fillMaxWidth()
+                                shape = PillShape,
+                                border = BorderStroke(1.5.dp, GalleryInk),
+                                modifier = Modifier
+                                    .weight(0.9f)
+                                    .height(48.dp)
                             ) {
-                                Text(if (state.isCanvasGenerating) "Creating Flat-Lay..." else "Create Flat-Lay Image")
+                                Text("Fresh Shot", color = GalleryInk)
                             }
                         }
-                    }
-                }
-
-                // Editorial Prompt Starters
-                Text("EDITORIAL PROMPT STARTERS", style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
-                starters.forEach { tpl ->
-                    Surface(
-                        color = GalleryCard,
-                        border = BorderStroke(1.dp, GalleryBorder),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { prompt = tpl }
-                    ) {
-                        Text(
-                            text = tpl,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(14.dp)
-                        )
+                    } else {
+                        Button(
+                            onClick = {
+                                onGenerate(prompt, false, aspectRatio, imageSize)
+                                prompt = ""
+                            },
+                            enabled = prompt.isNotBlank() && !state.isCanvasGenerating,
+                            shape = PillShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NeonLime,
+                                contentColor = GalleryInk,
+                                disabledContainerColor = GalleryStone,
+                                disabledContentColor = GalleryMuted
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                        ) {
+                            Icon(AtelierIcons.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (state.isCanvasGenerating) "Rendering..." else "Generate Flat-Lay", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

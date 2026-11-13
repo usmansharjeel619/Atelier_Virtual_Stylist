@@ -1,5 +1,6 @@
 package com.atelier.virtualstylist.ui.components
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,8 +19,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,38 +33,41 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.atelier.virtualstylist.data.model.GeneratedLookState
-import com.atelier.virtualstylist.ui.theme.GalleryBorder
+import com.atelier.virtualstylist.ui.theme.AtelierSurfaceCard
+import com.atelier.virtualstylist.ui.theme.CardShape
 import com.atelier.virtualstylist.ui.theme.GalleryBrass
 import com.atelier.virtualstylist.ui.theme.GalleryCard
 import com.atelier.virtualstylist.ui.theme.GalleryErrorBg
 import com.atelier.virtualstylist.ui.theme.GalleryErrorInk
+import com.atelier.virtualstylist.ui.theme.GalleryHairline
 import com.atelier.virtualstylist.ui.theme.GalleryInk
 import com.atelier.virtualstylist.ui.theme.GalleryMuted
 import com.atelier.virtualstylist.ui.theme.GalleryPaper
 import com.atelier.virtualstylist.ui.theme.GalleryStone
+import com.atelier.virtualstylist.ui.theme.HotCoral
+import com.atelier.virtualstylist.ui.theme.InnerShape
+import com.atelier.virtualstylist.ui.theme.NeonLime
+import com.atelier.virtualstylist.ui.theme.PillShape
 import com.atelier.virtualstylist.util.ImageCodec
-
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
-import android.graphics.Bitmap
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -87,10 +95,10 @@ private fun fashionColorToComposeColor(colorName: String, index: Int): Color {
         listOf("olive", "moss", "sage", "emerald", "forest", "green").any { it in lower } -> Color(0xFF4A5D46)
         else -> listOf(
             Color(0xFF1F1E1C),
-            Color(0xFF8A6A42),
-            Color(0xFF5A5852),
-            Color(0xFFC5BFB3),
-            Color(0xFF3D4856)
+            Color(0xFF2B4BFF),
+            Color(0xFFD4FF38),
+            Color(0xFFFF3D6E),
+            Color(0xFF5A5852)
         )[index % 5]
     }
 }
@@ -177,7 +185,6 @@ private fun OutfitColorPaletteBar(look: GeneratedLookState) {
         modifier = Modifier
             .fillMaxWidth()
             .height(10.dp)
-            .border(0.5.dp, GalleryBorder)
     ) {
         swatches.forEach { swatchColor ->
             Box(
@@ -200,6 +207,7 @@ fun LookTriptychSection(
     onRetryFlatLay: (String) -> Unit,
     onOpenRefine: (String) -> Unit,
     onCloseRefine: () -> Unit,
+    onOpenInEditor: (GeneratedLookState) -> Unit,
     onApplyEdit: (prompt: String, aspectRatio: String, imageSize: String) -> Unit,
     onSelectVersion: (lookId: String, imageUrl: String) -> Unit,
     onSaveLook: (GeneratedLookState) -> Unit,
@@ -207,19 +215,16 @@ fun LookTriptychSection(
 ) {
     if (looks.isEmpty()) return
 
+    var selectedIdx by remember { mutableIntStateOf(0) }
+    var piecesExpanded by remember { mutableStateOf(false) }
     var isCompareMode by remember { mutableStateOf(false) }
     var leftLookId by remember { mutableStateOf("") }
     var rightLookId by remember { mutableStateOf("") }
 
     LaunchedEffect(looks) {
-        if (looks.isEmpty()) {
-            leftLookId = ""
-            rightLookId = ""
-            isCompareMode = false
-        } else {
-            if (looks.none { it.id == leftLookId }) {
-                leftLookId = looks[0].id
-            }
+        if (selectedIdx >= looks.size) selectedIdx = 0
+        if (looks.isNotEmpty()) {
+            if (looks.none { it.id == leftLookId }) leftLookId = looks[0].id
             if (looks.size < 2) {
                 rightLookId = looks[0].id
                 isCompareMode = false
@@ -230,166 +235,149 @@ fun LookTriptychSection(
     }
 
     val canCompare = looks.size >= 2
+    val activeLook = looks.getOrElse(selectedIdx) { looks.first() }
     val leftLook = looks.firstOrNull { it.id == leftLookId } ?: looks.first()
     val rightLook = looks.firstOrNull { it.id == rightLookId } ?: looks.getOrElse(1) { looks.first() }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("FLAT-LAY LOOKBOOK", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-            Text("Three Curated Occasions", style = MaterialTheme.typography.headlineMedium, color = GalleryInk)
+        // Occasion Switcher + 1v1 Toggle on 1 Clean Line
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LazyRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                itemsIndexed(looks) { idx, item ->
+                    val active = !isCompareMode && idx == selectedIdx
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(if (active) GalleryInk else GalleryCard)
+                            .border(1.5.dp, if (active) GalleryInk else GalleryHairline, PillShape)
+                            .clickable {
+                                isCompareMode = false
+                                selectedIdx = idx
+                            }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = item.occasion,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (active) NeonLime else GalleryInk
+                        )
+                    }
+                }
+            }
 
             if (canCompare) {
-                Row(
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, GalleryBorder)
-                        .background(GalleryCard)
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        .clip(PillShape)
+                        .background(if (isCompareMode) GalleryBrass else GalleryCard)
+                        .border(1.5.dp, if (isCompareMode) GalleryBrass else GalleryHairline, PillShape)
+                        .clickable { isCompareMode = !isCompareMode }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Button(
-                        onClick = { isCompareMode = false },
-                        shape = RectangleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!isCompareMode) GalleryInk else GalleryCard,
-                            contentColor = if (!isCompareMode) GalleryPaper else GalleryMuted
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Triptych View", style = MaterialTheme.typography.labelMedium)
-                    }
-                    Button(
-                        onClick = { isCompareMode = true },
-                        shape = RectangleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isCompareMode) GalleryInk else GalleryCard,
-                            contentColor = if (isCompareMode) GalleryPaper else GalleryMuted
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(AtelierIcons.Compare, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Side-by-Side Compare", style = MaterialTheme.typography.labelMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(
+                            AtelierIcons.Compare,
+                            contentDescription = "Compare 1v1",
+                            tint = if (isCompareMode) Color.White else GalleryInk,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            "1v1",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isCompareMode) Color.White else GalleryInk
+                        )
                     }
                 }
             }
         }
 
         if (isCompareMode && canCompare) {
-            // Look A & Look B Pair Selector with Swap
-            Surface(
-                color = GalleryCard,
-                border = BorderStroke(1.dp, GalleryBorder),
-                modifier = Modifier.fillMaxWidth()
+            // 1v1 Comparison Controls + Side-by-Side Cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("COMPARE PAIR", style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
-                        OutlinedButton(
-                            onClick = {
-                                val prevLeft = leftLook.id
-                                leftLookId = rightLook.id
-                                rightLookId = prevLeft
-                            },
-                            shape = RectangleShape,
-                            border = BorderStroke(1.dp, GalleryBorder),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                LazyRow(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    itemsIndexed(looks) { _, opt ->
+                        val picked = opt.id == leftLook.id
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(if (picked) NeonLime else GalleryCard)
+                                .border(1.dp, GalleryInk, PillShape)
+                                .clickable {
+                                    if (opt.id == rightLook.id) rightLookId = leftLook.id
+                                    leftLookId = opt.id
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Icon(AtelierIcons.Swap, contentDescription = null, modifier = Modifier.size(14.dp), tint = GalleryInk)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Swap", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
+                            Text(opt.occasion, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                         }
                     }
-
-                    Text("LOOK A", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        looks.forEach { option ->
-                            val selected = option.id == leftLook.id
-                            OutlinedButton(
-                                onClick = {
-                                    if (option.id == rightLook.id) rightLookId = leftLook.id
-                                    leftLookId = option.id
-                                },
-                                shape = RectangleShape,
-                                border = BorderStroke(1.dp, if (selected) GalleryInk else GalleryBorder),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (selected) GalleryInk else GalleryPaper,
-                                    contentColor = if (selected) GalleryPaper else GalleryInk
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    option.occasion,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    Text("LOOK B", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        looks.forEach { option ->
-                            val selected = option.id == rightLook.id
-                            OutlinedButton(
-                                onClick = {
-                                    if (option.id == leftLook.id) leftLookId = rightLook.id
-                                    rightLookId = option.id
-                                },
-                                shape = RectangleShape,
-                                border = BorderStroke(1.dp, if (selected) GalleryInk else GalleryBorder),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (selected) GalleryInk else GalleryPaper,
-                                    contentColor = if (selected) GalleryPaper else GalleryInk
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    option.occasion,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                }
+                IconButton(
+                    onClick = {
+                        val tmp = leftLook.id
+                        leftLookId = rightLook.id
+                        rightLookId = tmp
+                    },
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(GalleryCard)
+                        .border(1.dp, GalleryHairline, CircleShape)
+                ) {
+                    Icon(AtelierIcons.Swap, contentDescription = "Swap", modifier = Modifier.size(16.dp))
+                }
+                LazyRow(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    itemsIndexed(looks) { _, opt ->
+                        val picked = opt.id == rightLook.id
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(if (picked) GalleryBrass else GalleryCard)
+                                .border(1.dp, if (picked) GalleryBrass else GalleryHairline, PillShape)
+                                .clickable {
+                                    if (opt.id == leftLook.id) leftLookId = rightLook.id
+                                    rightLookId = opt.id
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                opt.occasion,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (picked) Color.White else GalleryInk,
+                                maxLines = 1
+                            )
                         }
                     }
                 }
             }
 
-            // Side-by-Side Flat-Lay Visuals & Titles
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                listOf("Look A" to leftLook, "Look B" to rightLook).forEach { (slotLabel, look) ->
-                    val isSaved = !look.savedLookId.isNullOrBlank()
-                    val isSaving = savingLookId == look.id
-                    Surface(
-                        color = GalleryCard,
-                        border = BorderStroke(1.dp, GalleryBorder),
+                listOf(leftLook, rightLook).forEach { sideLook ->
+                    val isSaved = !sideLook.savedLookId.isNullOrBlank()
+                    AtelierSurfaceCard(
+                        containerColor = GalleryCard,
+                        borderColor = GalleryHairline,
+                        shape = CardShape,
                         modifier = Modifier.weight(1f)
                     ) {
                         Column {
@@ -401,396 +389,269 @@ fun LookTriptychSection(
                                 contentAlignment = Alignment.Center
                             ) {
                                 when {
-                                    look.isGenerating -> {
-                                        CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
-                                    }
-
-                                    !look.imageDataUrl.isNullOrBlank() -> {
-                                        val bmp = remember(look.imageDataUrl) {
-                                            ImageCodec.decodeDataUrlToBitmap(look.imageDataUrl)
+                                    sideLook.isGenerating -> CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
+                                    !sideLook.imageDataUrl.isNullOrBlank() -> {
+                                        val bmp = remember(sideLook.imageDataUrl) {
+                                            ImageCodec.decodeDataUrlToBitmap(sideLook.imageDataUrl)
                                         }
                                         if (bmp != null) {
                                             Image(
                                                 bitmap = bmp.asImageBitmap(),
-                                                contentDescription = "${look.occasion} flat-lay: ${look.title}",
+                                                contentDescription = sideLook.title,
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier.fillMaxSize()
                                             )
                                         }
                                     }
-
                                     else -> {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(GalleryPaper)
-                                                .padding(10.dp),
-                                            verticalArrangement = Arrangement.SpaceBetween
+                                        OutlinedButton(
+                                            onClick = { onRetryFlatLay(sideLook.id) },
+                                            shape = PillShape
                                         ) {
-                                            Text(look.occasion.uppercase(), style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                                            OutlinedButton(
-                                                onClick = { onRetryFlatLay(look.id) },
-                                                shape = RectangleShape,
-                                                border = BorderStroke(1.dp, GalleryInk),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text("Generate", style = MaterialTheme.typography.labelMedium)
-                                            }
+                                            Text("Retry", style = MaterialTheme.typography.labelMedium)
                                         }
                                     }
                                 }
                             }
-
-                            HorizontalDivider(color = GalleryBorder)
-                            OutfitColorPaletteBar(look = look)
-
+                            OutfitColorPaletteBar(look = sideLook)
                             Column(
                                 modifier = Modifier.padding(10.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    "$slotLabel · ${look.occasion.uppercase()}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = GalleryMuted,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    look.title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = GalleryInk,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    look.stylingRationale,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = GalleryMuted,
-                                    maxLines = 4,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
+                                Text(sideLook.occasion, style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
+                                Text(sideLook.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Button(
-                                        onClick = { onOpenRefine(look.id) },
-                                        enabled = !look.isGenerating,
-                                        shape = RectangleShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = GalleryInk,
-                                            contentColor = GalleryPaper
-                                        ),
+                                        onClick = { onOpenInEditor(sideLook) },
+                                        enabled = !sideLook.isGenerating,
+                                        shape = PillShape,
+                                        colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = GalleryInk),
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Refine", style = MaterialTheme.typography.labelMedium)
+                                        Text("Edit", style = MaterialTheme.typography.labelMedium)
                                     }
-                                    OutlinedButton(
-                                        onClick = { onSaveLook(look) },
-                                        enabled = !isSaving && !look.isGenerating,
-                                        shape = RectangleShape,
-                                        border = BorderStroke(1.dp, if (isSaved) GalleryBrass else GalleryBorder),
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                                    IconButton(
+                                        onClick = { onSaveLook(sideLook) },
+                                        enabled = !sideLook.isGenerating,
+                                        modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
                                             if (isSaved) AtelierIcons.Check else AtelierIcons.BookmarkBorder,
-                                            contentDescription = "Save to Wardrobe",
-                                            tint = if (isSaved) GalleryBrass else GalleryInk,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                                if (!look.imageDataUrl.isNullOrBlank()) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            onExportImage(
-                                                look.imageDataUrl,
-                                                "atelier-${look.occasion.lowercase().replace(" ", "-")}-outfit"
-                                            )
-                                        },
-                                        shape = RectangleShape,
-                                        border = BorderStroke(1.dp, GalleryBorder),
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Icon(AtelierIcons.Download, contentDescription = null, tint = GalleryInk, modifier = Modifier.size(14.dp))
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Download Outfit", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Aligned Piece-by-Piece Silhouette Comparison
-            val orderedSlots = remember(leftLook.id, rightLook.id, leftLook.pieces, rightLook.pieces) {
-                val slots = mutableListOf<String>()
-                val seen = mutableSetOf<String>()
-                for (p in leftLook.pieces + rightLook.pieces) {
-                    val key = p.slot.trim()
-                    if (key.isNotEmpty() && seen.add(key.lowercase())) {
-                        slots.add(key)
-                    }
-                }
-                slots
-            }
-
-            Surface(
-                color = GalleryCard,
-                border = BorderStroke(1.dp, GalleryBorder),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        "PIECE-BY-PIECE SILHOUETTE COMPARISON",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GalleryBrass
-                    )
-                    HorizontalDivider(color = GalleryBorder)
-
-                    orderedSlots.forEachIndexed { idx, slotName ->
-                        val leftPiece = leftLook.pieces.firstOrNull { it.slot.equals(slotName, ignoreCase = true) }
-                        val rightPiece = rightLook.pieces.firstOrNull { it.slot.equals(slotName, ignoreCase = true) }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(slotName.uppercase(), style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        leftPiece?.name ?: "—",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = GalleryInk
-                                    )
-                                    if (leftPiece != null) {
-                                        Text(
-                                            "${leftPiece.color} · ${leftPiece.material}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = GalleryMuted
-                                        )
-                                    }
-                                }
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        rightPiece?.name ?: "—",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = GalleryInk
-                                    )
-                                    if (rightPiece != null) {
-                                        Text(
-                                            "${rightPiece.color} · ${rightPiece.material}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = GalleryMuted
+                                            contentDescription = "Save",
+                                            tint = if (isSaved) HotCoral else GalleryInk,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 }
                             }
-                        }
-
-                        if (idx < orderedSlots.lastIndex) {
-                            HorizontalDivider(color = GalleryBorder)
                         }
                     }
                 }
             }
         } else {
-            looks.forEachIndexed { index, look ->
-                val indexLabel = String.format("%02d", index + 1)
-                val isSaved = !look.savedLookId.isNullOrBlank()
-                val isSaving = savingLookId == look.id
+            // Single Active Visual Fit Card (Zero Scroll Fatigue!)
+            val isSaved = !activeLook.savedLookId.isNullOrBlank()
+            val isSaving = savingLookId == activeLook.id
 
-                Surface(
-                    color = GalleryCard,
-                    border = BorderStroke(1.dp, GalleryBorder),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        // Flat-Lay Visual Frame
+            AtelierSurfaceCard(
+                containerColor = GalleryCard,
+                borderColor = GalleryHairline,
+                shape = CardShape,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(3f / 3.8f)
+                            .background(GalleryStone),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            activeLook.isGenerating -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
+                                    Text("Styling ${activeLook.occasion}...", style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+
+                            !activeLook.imageDataUrl.isNullOrBlank() -> {
+                                val bmp = remember(activeLook.imageDataUrl) {
+                                    ImageCodec.decodeDataUrlToBitmap(activeLook.imageDataUrl)
+                                }
+                                if (bmp != null) {
+                                    Image(
+                                        bitmap = bmp.asImageBitmap(),
+                                        contentDescription = activeLook.title,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+
+                                // Top-Right Overlaid Save + Download Icons
+                                Row(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(GalleryCard.copy(alpha = 0.92f))
+                                            .clickable {
+                                                onExportImage(
+                                                    activeLook.imageDataUrl,
+                                                    "atelier-${activeLook.occasion.lowercase().replace(" ", "-")}-outfit"
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(AtelierIcons.Download, contentDescription = "Download", tint = GalleryInk, modifier = Modifier.size(18.dp))
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isSaved) HotCoral else GalleryCard.copy(alpha = 0.92f))
+                                            .clickable(enabled = !isSaving) { onSaveLook(activeLook) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            if (isSaved) AtelierIcons.Check else AtelierIcons.BookmarkBorder,
+                                            contentDescription = "Save",
+                                            tint = if (isSaved) Color.White else GalleryInk,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> {
+                                Column(
+                                    modifier = Modifier.padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    if (!activeLook.error.isNullOrBlank()) {
+                                        Text(
+                                            text = activeLook.error,
+                                            color = GalleryErrorInk,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(InnerShape)
+                                                .background(GalleryErrorBg)
+                                                .padding(12.dp)
+                                        )
+                                    }
+                                    Button(
+                                        onClick = { onRetryFlatLay(activeLook.id) },
+                                        shape = PillShape,
+                                        colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = GalleryInk)
+                                    ) {
+                                        Icon(AtelierIcons.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Generate Photo", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    OutfitColorPaletteBar(look = activeLook)
+
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(activeLook.title, style = MaterialTheme.typography.headlineSmall)
+                        Text(
+                            text = activeLook.stylingRationale,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GalleryMuted,
+                            maxLines = if (piecesExpanded) 10 else 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        // Tap-to-Expand Pieces Accordion (No text clutter by default!)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(3f / 4f)
-                                .background(GalleryStone),
-                            contentAlignment = Alignment.Center
+                                .clip(InnerShape)
+                                .background(GalleryPaper)
+                                .clickable { piecesExpanded = !piecesExpanded }
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
                         ) {
-                            when {
-                                look.isGenerating -> {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                                        modifier = Modifier.padding(24.dp)
-                                    ) {
-                                        CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
-                                        Text(
-                                            "Composing ${look.occasion} Flat-Lay",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            color = GalleryInk
-                                        )
-                                    }
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "Pieces (${activeLook.pieces.size})",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = GalleryInk
+                                    )
+                                    Text(
+                                        if (piecesExpanded) "Hide ↑" else "Show all ↓",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = GalleryBrass
+                                    )
                                 }
-
-                                !look.imageDataUrl.isNullOrBlank() -> {
-                                    val bmp = remember(look.imageDataUrl) {
-                                        ImageCodec.decodeDataUrlToBitmap(look.imageDataUrl)
-                                    }
-                                    if (bmp != null) {
-                                        Image(
-                                            bitmap = bmp.asImageBitmap(),
-                                            contentDescription = "${look.occasion} flat-lay: ${look.title}",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    }
-                                }
-
-                                else -> {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(GalleryPaper)
-                                            .padding(20.dp),
-                                        verticalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(
-                                                "EDITORIAL PIECE BOARD · ${look.occasion.uppercase()}",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = GalleryBrass
-                                            )
-                                            Text(look.title, style = MaterialTheme.typography.headlineSmall)
-                                        }
-
-                                        if (!look.error.isNullOrBlank()) {
-                                            Text(
-                                                text = look.error,
-                                                color = GalleryErrorInk,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .background(GalleryErrorBg)
-                                                    .padding(12.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { onRetryFlatLay(look.id) },
-                                            shape = RectangleShape,
-                                            border = BorderStroke(1.dp, GalleryInk),
-                                            modifier = Modifier.fillMaxWidth()
+                                if (piecesExpanded) {
+                                    HorizontalDivider(thickness = 1.dp, color = GalleryHairline)
+                                    activeLook.pieces.forEach { piece ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Icon(AtelierIcons.Refresh, contentDescription = null, modifier = Modifier.padding(end = 6.dp))
-                                            Text("Generate Flat-Lay Photo")
+                                            Text(piece.slot, style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
+                                            Text(
+                                                "${piece.name} · ${piece.color}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = GalleryInk
+                                            )
                                         }
                                     }
                                 }
                             }
                         }
 
-                        HorizontalDivider(color = GalleryBorder)
-                        OutfitColorPaletteBar(look = look)
-
-                        Column(
-                            modifier = Modifier.padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        // Primary Thumb Actions
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            Button(
+                                onClick = { onOpenInEditor(activeLook) },
+                                enabled = !activeLook.isGenerating,
+                                shape = PillShape,
+                                colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = GalleryInk),
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .height(48.dp)
                             ) {
-                                Text(
-                                    "$indexLabel · ${look.occasion.uppercase()}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = GalleryMuted
-                                )
-                                if (look.editPromptHistory.isNotEmpty()) {
-                                    Text(
-                                        "Edited · v${look.imageHistory.size}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = GalleryBrass
-                                    )
-                                }
+                                Icon(AtelierIcons.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Edit in Studio", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                             }
-
-                            Text(look.title, style = MaterialTheme.typography.headlineSmall, color = GalleryInk)
-                            Text(look.stylingRationale, style = MaterialTheme.typography.bodyMedium, color = GalleryMuted)
-
-                            HorizontalDivider(color = GalleryBorder)
-                            Text("OUTFIT PIECES", style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
-
-                            look.pieces.forEach { piece ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(piece.slot, style = MaterialTheme.typography.bodyMedium, color = GalleryMuted)
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(piece.name, style = MaterialTheme.typography.titleMedium, color = GalleryInk)
-                                        Text(
-                                            "${piece.color} · ${piece.material}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = GalleryMuted
-                                        )
-                                    }
-                                }
-                            }
-
-                            HorizontalDivider(color = GalleryBorder)
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            OutlinedButton(
+                                onClick = { onOpenRefine(activeLook.id) },
+                                enabled = !activeLook.isGenerating,
+                                shape = PillShape,
+                                border = BorderStroke(1.5.dp, GalleryInk),
+                                modifier = Modifier
+                                    .weight(0.9f)
+                                    .height(48.dp)
                             ) {
-                                Button(
-                                    onClick = { onOpenRefine(look.id) },
-                                    enabled = !look.isGenerating,
-                                    shape = RectangleShape,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = GalleryInk,
-                                        contentColor = GalleryPaper
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(AtelierIcons.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.size(6.dp))
-                                    Text("Refine Prompt")
-                                }
-
-                                OutlinedButton(
-                                    onClick = { onSaveLook(look) },
-                                    enabled = !isSaving && !look.isGenerating,
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, if (isSaved) GalleryBrass else GalleryBorder)
-                                ) {
-                                    Icon(
-                                        if (isSaved) AtelierIcons.Check else AtelierIcons.BookmarkBorder,
-                                        contentDescription = "Save to Wardrobe",
-                                        tint = if (isSaved) GalleryBrass else GalleryInk
-                                    )
-                                }
-                            }
-                            if (!look.imageDataUrl.isNullOrBlank()) {
-                                OutlinedButton(
-                                    onClick = {
-                                        onExportImage(
-                                            look.imageDataUrl,
-                                            "atelier-${look.occasion.lowercase().replace(" ", "-")}-outfit"
-                                        )
-                                    },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, GalleryBorder),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(AtelierIcons.Download, contentDescription = null, tint = GalleryInk, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Download Outfit", style = MaterialTheme.typography.bodyMedium, color = GalleryInk)
-                                }
+                                Text("Quick Tweak", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
                             }
                         }
                     }
@@ -799,153 +660,107 @@ fun LookTriptychSection(
         }
     }
 
-    // Refine Prompt Dialog
     if (refiningLook != null) {
         var promptInput by remember(refiningLook.id) { mutableStateOf("") }
         var aspectRatio by remember { mutableStateOf("3:4") }
         var imageSize by remember { mutableStateOf("1K") }
 
         val suggestions = listOf(
-            "Swap shoes for white leather sneakers",
-            "Add a camel wool trench coat beside the look",
-            "Replace the bag with an espresso woven leather tote"
+            "Swap shoes for chunky silver sneakers",
+            "Add oversized leather moto jacket",
+            "Replace bag with metallic mini baguette"
         )
 
         Dialog(onDismissRequest = onCloseRefine) {
-            Surface(
-                color = GalleryPaper,
-                border = BorderStroke(1.dp, GalleryInk),
-                modifier = Modifier.fillMaxWidth()
+            AtelierSurfaceCard(
+                containerColor = GalleryPaper,
+                borderColor = GalleryInk,
+                shape = CardShape
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(GalleryCard)
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("PROMPT FLAT-LAY EDITOR", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                            Text(refiningLook.title, style = MaterialTheme.typography.headlineSmall)
-                        }
-                        IconButton(onClick = onCloseRefine) {
-                            Icon(AtelierIcons.Close, contentDescription = "Close editor")
+                        Text("Quick Tweak", style = MaterialTheme.typography.headlineSmall)
+                        IconButton(onClick = onCloseRefine, modifier = Modifier.size(30.dp)) {
+                            Icon(AtelierIcons.Close, contentDescription = "Close")
                         }
                     }
-                    HorizontalDivider(color = GalleryBorder)
 
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (refiningLook.imageHistory.size > 1) {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                itemsIndexed(refiningLook.imageHistory) { idx, histUrl ->
-                                    val thumb = remember(histUrl) { ImageCodec.decodeDataUrlToBitmap(histUrl) }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .border(
-                                                if (refiningLook.imageDataUrl == histUrl) 2.dp else 1.dp,
-                                                if (refiningLook.imageDataUrl == histUrl) GalleryInk else GalleryBorder
-                                            )
-                                            .clickable { onSelectVersion(refiningLook.id, histUrl) }
-                                    ) {
-                                        if (thumb != null) {
-                                            Image(
-                                                bitmap = thumb.asImageBitmap(),
-                                                contentDescription = "Version ${idx + 1}",
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        }
+                    if (refiningLook.imageHistory.size > 1) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            itemsIndexed(refiningLook.imageHistory) { idx, histUrl ->
+                                val thumb = remember(histUrl) { ImageCodec.decodeDataUrlToBitmap(histUrl) }
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .border(
+                                            if (refiningLook.imageDataUrl == histUrl) 2.dp else 1.dp,
+                                            if (refiningLook.imageDataUrl == histUrl) GalleryBrass else GalleryHairline,
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable { onSelectVersion(refiningLook.id, histUrl) }
+                                ) {
+                                    if (thumb != null) {
+                                        Image(
+                                            bitmap = thumb.asImageBitmap(),
+                                            contentDescription = "v${idx + 1}",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
                                     }
                                 }
                             }
                         }
+                    }
 
-                        OutlinedTextField(
-                            value = promptInput,
-                            onValueChange = { promptInput = it },
-                            label = { Text("Describe your flat-lay refinement") },
-                            minLines = 3,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    OutlinedTextField(
+                        value = promptInput,
+                        onValueChange = { promptInput = it },
+                        label = { Text("What should we change?") },
+                        minLines = 2,
+                        shape = InnerShape,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                        suggestions.forEach { hint ->
-                            Surface(
-                                color = GalleryCard,
-                                border = BorderStroke(1.dp, GalleryBorder),
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        itemsIndexed(suggestions) { _, hint ->
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
+                                    .clip(PillShape)
+                                    .background(GalleryCard)
+                                    .border(1.dp, GalleryHairline, PillShape)
                                     .clickable { promptInput = hint }
+                                    .padding(horizontal = 12.dp, vertical = 7.dp)
                             ) {
-                                Text(
-                                    text = hint,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(10.dp)
-                                )
+                                Text(hint, style = MaterialTheme.typography.labelMedium)
                             }
                         }
+                    }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("3:4", "1:1", "4:3").forEach { r ->
-                                OutlinedButton(
-                                    onClick = { aspectRatio = r },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, if (aspectRatio == r) GalleryInk else GalleryBorder),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (aspectRatio == r) GalleryInk else GalleryCard,
-                                        contentColor = if (aspectRatio == r) GalleryPaper else GalleryInk
-                                    )
-                                ) {
-                                    Text(r)
-                                }
-                            }
-                            listOf("1K", "2K").forEach { sz ->
-                                OutlinedButton(
-                                    onClick = { imageSize = sz },
-                                    shape = RectangleShape,
-                                    border = BorderStroke(1.dp, if (imageSize == sz) GalleryInk else GalleryBorder),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (imageSize == sz) GalleryInk else GalleryCard,
-                                        contentColor = if (imageSize == sz) GalleryPaper else GalleryInk
-                                    )
-                                ) {
-                                    Text(sz)
-                                }
-                            }
-                        }
+                    if (!editError.isNullOrBlank()) {
+                        Text(editError, color = GalleryErrorInk, style = MaterialTheme.typography.bodyMedium)
+                    }
 
-                        if (!editError.isNullOrBlank()) {
-                            Text(
-                                text = editError,
-                                color = GalleryErrorInk,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(GalleryErrorBg)
-                                    .padding(10.dp)
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                onApplyEdit(promptInput, aspectRatio, imageSize)
-                                promptInput = ""
-                            },
-                            enabled = promptInput.isNotBlank() && !isApplyingEdit,
-                            shape = RectangleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = GalleryInk,
-                                contentColor = GalleryPaper
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(if (isApplyingEdit) "Applying Edit..." else "Apply Prompt Edit")
-                        }
+                    Button(
+                        onClick = {
+                            onApplyEdit(promptInput, aspectRatio, imageSize)
+                            promptInput = ""
+                        },
+                        enabled = promptInput.isNotBlank() && !isApplyingEdit,
+                        shape = PillShape,
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = GalleryInk),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text(if (isApplyingEdit) "Applying..." else "Apply Tweak", fontWeight = FontWeight.Bold)
                     }
                 }
             }

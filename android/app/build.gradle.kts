@@ -28,7 +28,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"https://ais-dev-5gup3x3kfq56lbngbfls42-659412078073.europe-west3.run.app\""
+            "\"https://ais-pre-5gup3x3kfq56lbngbfls42-659412078073.europe-west3.run.app\""
         )
         buildConfigField(
             "String",
@@ -92,4 +92,5 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+    implementation(libs.androidx.browser)
 }

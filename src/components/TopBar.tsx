@@ -22,64 +22,71 @@ export function TopBar({
   onSignOut,
 }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 bg-[#FAF9F6]/95 backdrop-blur-sm border-b border-[#E5E3DC]">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-10 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Single-line editorial wordmark */}
+    <header className="sticky top-0 z-30 bg-[#F6F4EC] border-b-[3px] border-[#111111]">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 h-[72px] flex items-center justify-between gap-4 md:gap-8">
+        {/* Zone 1: Skewed Zine Masthead */}
         <button
           type="button"
           onClick={() => onSelectTab('studio')}
-          className="font-serif text-2xl font-semibold tracking-tight text-[#141413] whitespace-nowrap shrink-0 cursor-pointer hover:opacity-80 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A6A42]"
+          className="flex items-center gap-3 whitespace-nowrap shrink-0 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2B4BFF]"
         >
-          Atelier
+          <span className="-rotate-2 group-hover:rotate-0 transition-transform bg-[#111111] text-[#D4FF38] font-display font-extrabold text-xl sm:text-2xl tracking-tight px-3 py-1 border-[3px] border-[#111111] shadow-[4px_4px_0_#FF3D6E]">
+            ATELIER
+          </span>
+          <span className="hidden md:inline-block rotate-1 bg-[#D5A8FF] border-2 border-[#111111] px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-widest text-[#111111]">
+            Zine Lab
+          </span>
         </button>
 
-        {/* Zone 2: Concise single-line text navigation */}
-        <nav className="flex items-center gap-6 md:gap-8 text-sm font-medium text-[#68665F]">
+        {/* Zone 2: Chunky Rotated Navigation */}
+        <nav className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => onSelectTab('studio')}
-            className={`whitespace-nowrap shrink-0 py-1 border-b transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A6A42] ${
+            className={`whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider border-[3px] border-[#111111] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2B4BFF] ${
               activeTab === 'studio'
-                ? 'text-[#141413] border-[#141413]'
-                : 'border-transparent hover:text-[#141413]'
+                ? '-rotate-1 bg-[#D4FF38] text-[#111111] shadow-[4px_4px_0_#111111]'
+                : 'bg-white text-[#111111] hover:bg-[#EBE7DA] hover:-rotate-1'
             }`}
           >
-            Styling Studio
+            Studio
           </button>
           <button
             type="button"
             onClick={() => onSelectTab('canvas')}
-            className={`whitespace-nowrap shrink-0 py-1 border-b transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A6A42] ${
+            className={`whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider border-[3px] border-[#111111] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2B4BFF] ${
               activeTab === 'canvas'
-                ? 'text-[#141413] border-[#141413]'
-                : 'border-transparent hover:text-[#141413]'
+                ? 'rotate-1 bg-[#2B4BFF] text-white shadow-[4px_4px_0_#111111]'
+                : 'bg-white text-[#111111] hover:bg-[#EBE7DA] hover:rotate-1'
             }`}
           >
-            Flat-Lay Canvas
+            Editor
           </button>
           <button
             type="button"
             onClick={() => onSelectTab('wardrobe')}
-            className={`whitespace-nowrap shrink-0 py-1 border-b transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8A6A42] ${
+            className={`whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider border-[3px] border-[#111111] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2B4BFF] ${
               activeTab === 'wardrobe'
-                ? 'text-[#141413] border-[#141413]'
-                : 'border-transparent hover:text-[#141413]'
+                ? '-rotate-1 bg-[#FF3D6E] text-white shadow-[4px_4px_0_#111111]'
+                : 'bg-white text-[#111111] hover:bg-[#EBE7DA] hover:-rotate-1'
             }`}
           >
-            Wardrobe{user && wardrobeCount > 0 ? ` (${wardrobeCount})` : ''}
+            Closet{user && wardrobeCount > 0 ? ` (${wardrobeCount})` : ''}
           </button>
         </nav>
 
-        {/* Zone 3: Single primary auth action */}
+        {/* Zone 3: Single Bold Auth Trigger */}
         <div className="flex items-center shrink-0">
           {!authReady ? (
-            <span className="text-xs text-[#68665F] whitespace-nowrap shrink-0">Loading</span>
+            <span className="text-xs font-mono font-bold uppercase text-[#545149] whitespace-nowrap shrink-0">
+              Sync...
+            </span>
           ) : user ? (
             <button
               type="button"
               onClick={onSignOut}
               title={`Signed in as ${user.email ?? user.displayName ?? 'Member'}`}
-              className="px-4 py-2 text-xs font-medium border border-[#E5E3DC] bg-white text-[#141413] hover:border-[#141413] transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A6A42]"
+              className="zine-btn px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-white text-[#111111] whitespace-nowrap shrink-0 cursor-pointer"
             >
               Sign Out
             </button>
@@ -87,7 +94,7 @@ export function TopBar({
             <button
               type="button"
               onClick={onSignIn}
-              className="px-4 py-2 text-xs font-medium bg-[#141413] text-[#FAF9F6] hover:bg-[#2B2A28] transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A6A42]"
+              className="zine-btn px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#111111] text-[#D4FF38] whitespace-nowrap shrink-0 cursor-pointer"
             >
               Sign In
             </button>

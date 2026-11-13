@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,141 +30,60 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.atelier.virtualstylist.data.model.GarmentAnalysis
-import com.atelier.virtualstylist.data.model.StyleBrief
-import com.atelier.virtualstylist.ui.theme.GalleryBorder
+import com.atelier.virtualstylist.ui.theme.AtelierSurfaceCard
+import com.atelier.virtualstylist.ui.theme.CardShape
 import com.atelier.virtualstylist.ui.theme.GalleryBrass
 import com.atelier.virtualstylist.ui.theme.GalleryCard
 import com.atelier.virtualstylist.ui.theme.GalleryErrorBg
 import com.atelier.virtualstylist.ui.theme.GalleryErrorInk
+import com.atelier.virtualstylist.ui.theme.GalleryHairline
 import com.atelier.virtualstylist.ui.theme.GalleryInk
 import com.atelier.virtualstylist.ui.theme.GalleryMuted
 import com.atelier.virtualstylist.ui.theme.GalleryPaper
+import com.atelier.virtualstylist.ui.theme.HotCoral
+import com.atelier.virtualstylist.ui.theme.InnerShape
+import com.atelier.virtualstylist.ui.theme.NeonLime
+import com.atelier.virtualstylist.ui.theme.PillShape
 
 @Composable
-fun DossierSection(
-    analysis: GarmentAnalysis,
-    brief: StyleBrief,
-    isLoadingInsight: Boolean,
-    insightError: String?,
-    onRefreshInsight: () -> Unit,
-    isLoadingQuickTips: Boolean,
-    quickTipsError: String?,
-    onRefreshQuickTips: () -> Unit
-) {
+fun ColorDnaSection(analysis: GarmentAnalysis) {
     val clipboard = LocalClipboardManager.current
     var copiedHex by remember { mutableStateOf<String?>(null) }
-    var showQuickTips by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Header + Quick Tips Trigger
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "GARMENT DOSSIER · ${analysis.category.uppercase()}",
-                style = MaterialTheme.typography.labelMedium,
-                color = GalleryBrass
-            )
-            OutlinedButton(
-                onClick = {
-                    showQuickTips = true
-                    if (analysis.quickTips.isEmpty() && !isLoadingQuickTips) {
-                        onRefreshQuickTips()
-                    }
-                },
-                shape = RectangleShape,
-                border = BorderStroke(1.dp, GalleryInk),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = GalleryCard,
-                    contentColor = GalleryInk
-                )
+        if (analysis.palette.isNotEmpty()) {
+            AtelierSurfaceCard(
+                containerColor = GalleryCard,
+                borderColor = GalleryHairline,
+                shape = CardShape
             ) {
-                Icon(AtelierIcons.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Quick Tips", style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-
-        Text(
-            text = analysis.garmentTitle,
-            style = MaterialTheme.typography.displaySmall,
-            color = GalleryInk
-        )
-
-        Text(
-            text = "${brief.season} · ${brief.silhouette} · ${brief.budgetTier}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = GalleryMuted
-        )
-
-        Text(
-            text = analysis.styleSummary,
-            style = MaterialTheme.typography.bodyMedium,
-            color = GalleryInk
-        )
-
-        Surface(
-            color = GalleryCard,
-            border = BorderStroke(1.dp, GalleryBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "MATERIAL & PATTERN READ",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = GalleryMuted
-                )
-                Text(
-                    text = analysis.fabricNotes,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = GalleryInk
-                )
-            }
-        }
-
-        // Visual Color Palette Grid
-        Surface(
-            color = GalleryCard,
-            border = BorderStroke(1.dp, GalleryBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("COLOR PALETTE", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                    Text(
-                        "${analysis.palette.size} Swatches",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GalleryMuted
-                    )
-                }
-
-                // Tonal Proportion Bar
-                if (analysis.palette.isNotEmpty()) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Color Mix", style = MaterialTheme.typography.titleMedium)
+                        Text("${analysis.palette.size} shades", style = MaterialTheme.typography.labelMedium, color = GalleryMuted)
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(10.dp)
-                            .border(0.5.dp, GalleryBorder)
+                            .height(22.dp)
+                            .clip(InnerShape)
                     ) {
                         analysis.palette.forEachIndexed { idx, sw ->
                             val weight = when {
@@ -175,262 +94,248 @@ fun DossierSection(
                             Box(
                                 modifier = Modifier
                                     .weight(weight)
-                                    .height(10.dp)
+                                    .height(22.dp)
                                     .background(parseHexColor(sw.hex))
                             )
                         }
                     }
                 }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    analysis.palette.chunked(2).forEach { rowSwatches ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            rowSwatches.forEach { swatch ->
-                                val hexUpper = swatch.hex.uppercase()
-                                Surface(
-                                    color = GalleryPaper,
-                                    border = BorderStroke(1.dp, GalleryBorder),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(64.dp)
-                                                .background(parseHexColor(swatch.hex))
-                                        )
-                                        Column(
-                                            modifier = Modifier.padding(10.dp),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Text(
-                                                text = swatch.role.uppercase(),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = GalleryBrass
-                                            )
-                                            Text(
-                                                text = swatch.name,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = GalleryInk
-                                            )
-                                            HorizontalDivider(color = GalleryBorder)
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        clipboard.setText(AnnotatedString(hexUpper))
-                                                        copiedHex = hexUpper
-                                                    }
-                                                    .padding(top = 4.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = if (copiedHex == hexUpper) "COPIED" else hexUpper,
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    color = if (copiedHex == hexUpper) GalleryBrass else GalleryMuted
-                                                )
-                                                Icon(
-                                                    AtelierIcons.Copy,
-                                                    contentDescription = "Copy $hexUpper",
-                                                    tint = GalleryMuted,
-                                                    modifier = Modifier.size(14.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (rowSwatches.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
-                }
             }
         }
 
-        // Style Insight Card (Material & Cut Guidance)
-        Surface(
-            color = GalleryCard,
-            border = BorderStroke(1.dp, GalleryBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("STYLE INSIGHT · MATERIAL & CUT", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                    IconButton(onClick = onRefreshInsight, enabled = !isLoadingInsight) {
-                        if (isLoadingInsight) {
-                            CircularProgressIndicator(strokeWidth = 1.5.dp, modifier = Modifier.size(18.dp))
-                        } else {
-                            Icon(AtelierIcons.Refresh, contentDescription = "Refresh Style Insight", tint = GalleryInk)
-                        }
-                    }
-                }
-                HorizontalDivider(color = GalleryBorder)
-
-                if (!insightError.isNullOrBlank()) {
-                    Text(
-                        text = insightError,
-                        color = GalleryErrorInk,
-                        style = MaterialTheme.typography.bodyMedium,
+        analysis.palette.chunked(2).forEach { rowSwatches ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rowSwatches.forEach { swatch ->
+                    val hexUpper = swatch.hex.uppercase()
+                    AtelierSurfaceCard(
+                        containerColor = GalleryCard,
+                        borderColor = GalleryHairline,
+                        shape = CardShape,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .background(GalleryErrorBg)
-                            .padding(12.dp)
-                    )
-                }
-
-                val insight = analysis.styleInsight
-                if (insight != null) {
-                    val rows = listOf(
-                        "01. PROPORTION & CUT" to insight.fitAndProportion,
-                        "02. MATERIAL & DRAPE" to insight.materialAndDrape,
-                        "03. HOW TO WEAR IT" to insight.howToWear,
-                        "04. WHAT TO AVOID" to insight.whatToAvoid
-                    )
-                    rows.forEachIndexed { idx, (label, text) ->
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(label, style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                            Text(text, style = MaterialTheme.typography.bodyMedium, color = GalleryInk)
+                            .weight(1f)
+                            .clickable {
+                                clipboard.setText(AnnotatedString(hexUpper))
+                                copiedHex = hexUpper
+                            }
+                    ) {
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(68.dp)
+                                    .background(parseHexColor(swatch.hex))
+                            )
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = swatch.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (copiedHex == hexUpper) "Copied!" else hexUpper,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (copiedHex == hexUpper) HotCoral else GalleryMuted
+                                    )
+                                    Icon(
+                                        AtelierIcons.Copy,
+                                        contentDescription = "Copy $hexUpper",
+                                        tint = GalleryMuted,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
                         }
-                        if (idx < rows.lastIndex) HorizontalDivider(color = GalleryBorder)
                     }
-                } else if (!isLoadingInsight) {
-                    Text(
-                        text = "Tap Refresh above to generate proportion and drape guidance for this piece.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GalleryMuted,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                }
+                if (rowSwatches.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StyleNotesSection(
+    analysis: GarmentAnalysis,
+    isLoadingInsight: Boolean,
+    insightError: String?,
+    onRefreshInsight: () -> Unit,
+    isLoadingQuickTips: Boolean,
+    quickTipsError: String?,
+    onRefreshQuickTips: () -> Unit
+) {
+    var showQuickTips by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    showQuickTips = true
+                    if (analysis.quickTips.isEmpty() && !isLoadingQuickTips) {
+                        onRefreshQuickTips()
+                    }
+                },
+                shape = PillShape,
+                border = BorderStroke(1.5.dp, GalleryInk),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = NeonLime),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(AtelierIcons.Lightbulb, contentDescription = null, tint = GalleryInk, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Quick Tips", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
+            }
+
+            OutlinedButton(
+                onClick = onRefreshInsight,
+                enabled = !isLoadingInsight,
+                shape = PillShape,
+                border = BorderStroke(1.5.dp, GalleryHairline),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = GalleryCard),
+                modifier = Modifier.weight(1f)
+            ) {
+                if (isLoadingInsight) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+                } else {
+                    Icon(AtelierIcons.Refresh, contentDescription = null, tint = GalleryInk, modifier = Modifier.size(16.dp))
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Refresh", style = MaterialTheme.typography.labelMedium, color = GalleryInk)
+            }
+        }
+
+        if (!insightError.isNullOrBlank()) {
+            Text(
+                text = insightError,
+                color = GalleryErrorInk,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(InnerShape)
+                    .background(GalleryErrorBg)
+                    .padding(12.dp)
+            )
+        }
+
+        val insight = analysis.styleInsight
+        if (insight != null) {
+            val cards = listOf(
+                Triple("Fit", insight.fitAndProportion, GalleryBrass),
+                Triple("Fabric", insight.materialAndDrape, GalleryInk),
+                Triple("Wear With", insight.howToWear, GalleryInk),
+                Triple("Avoid", insight.whatToAvoid, HotCoral)
+            )
+            cards.forEach { (title, body, accent) ->
+                AtelierSurfaceCard(
+                    containerColor = GalleryCard,
+                    borderColor = GalleryHairline
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(title, style = MaterialTheme.typography.labelMedium, color = accent)
+                        Text(body, style = MaterialTheme.typography.bodyMedium, color = GalleryInk)
+                    }
+                }
+            }
+        } else {
+            AtelierSurfaceCard(containerColor = GalleryCard, borderColor = GalleryHairline) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Cut & Texture", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
+                    Text(analysis.fabricNotes, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
     }
 
-    // Quick Tips Modal Overlay
     if (showQuickTips) {
         Dialog(onDismissRequest = { showQuickTips = false }) {
-            Surface(
-                color = GalleryPaper,
-                border = BorderStroke(1.dp, GalleryInk),
-                modifier = Modifier.fillMaxWidth()
+            AtelierSurfaceCard(
+                containerColor = GalleryPaper,
+                borderColor = GalleryInk,
+                shape = CardShape
             ) {
-                Column {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(GalleryCard)
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("QUICK TIPS · TEXTURE & CUT", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(analysis.garmentTitle, style = MaterialTheme.typography.headlineSmall, color = GalleryInk)
-                        }
-                        IconButton(onClick = { showQuickTips = false }) {
-                            Icon(AtelierIcons.Close, contentDescription = "Close Quick Tips", tint = GalleryInk)
+                        Text("Quick Tips", style = MaterialTheme.typography.headlineSmall)
+                        IconButton(onClick = { showQuickTips = false }, modifier = Modifier.size(30.dp)) {
+                            Icon(AtelierIcons.Close, contentDescription = "Close")
                         }
                     }
-                    HorizontalDivider(color = GalleryBorder)
 
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (!quickTipsError.isNullOrBlank()) {
-                            Text(
-                                text = quickTipsError,
-                                color = GalleryErrorInk,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(GalleryErrorBg)
-                                    .padding(10.dp)
-                            )
+                    if (!quickTipsError.isNullOrBlank()) {
+                        Text(quickTipsError, color = GalleryErrorInk, style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    if (isLoadingQuickTips) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.Center) {
+                            CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
                         }
-
-                        if (isLoadingQuickTips) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(strokeWidth = 2.dp, color = GalleryInk)
-                            }
-                        } else if (analysis.quickTips.isNotEmpty()) {
-                            Surface(color = GalleryCard, border = BorderStroke(1.dp, GalleryBorder)) {
-                                Column {
-                                    analysis.quickTips.forEachIndexed { idx, tip ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(14.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Text(
-                                                text = String.format("%02d", idx + 1),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = GalleryBrass
-                                            )
-                                            Text(
-                                                text = tip,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = GalleryInk
-                                            )
-                                        }
-                                        if (idx < analysis.quickTips.lastIndex) {
-                                            HorizontalDivider(color = GalleryBorder)
-                                        }
+                    } else if (analysis.quickTips.isNotEmpty()) {
+                        AtelierSurfaceCard(containerColor = GalleryCard, borderColor = GalleryHairline, shape = InnerShape) {
+                            Column {
+                                analysis.quickTips.forEachIndexed { idx, tip ->
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Text("${idx + 1}.", style = MaterialTheme.typography.labelMedium, color = GalleryBrass)
+                                        Text(tip, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                    if (idx < analysis.quickTips.lastIndex) {
+                                        HorizontalDivider(thickness = 1.dp, color = GalleryHairline)
                                     }
                                 }
                             }
                         }
+                    }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onRefreshQuickTips,
+                            enabled = !isLoadingQuickTips,
+                            shape = PillShape,
+                            border = BorderStroke(1.5.dp, GalleryHairline),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            OutlinedButton(
-                                onClick = onRefreshQuickTips,
-                                enabled = !isLoadingQuickTips,
-                                shape = RectangleShape,
-                                border = BorderStroke(1.dp, GalleryBorder)
-                            ) {
-                                Icon(AtelierIcons.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Refresh Tips")
-                            }
-
-                            OutlinedButton(
-                                onClick = { showQuickTips = false },
-                                shape = RectangleShape,
-                                border = BorderStroke(1.dp, GalleryInk),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = GalleryInk,
-                                    contentColor = GalleryPaper
-                                )
-                            ) {
-                                Text("Done")
-                            }
+                            Text("Refresh", color = GalleryInk)
+                        }
+                        OutlinedButton(
+                            onClick = { showQuickTips = false },
+                            shape = PillShape,
+                            border = BorderStroke(1.5.dp, GalleryInk),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = NeonLime),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Done", color = GalleryInk)
                         }
                     }
                 }

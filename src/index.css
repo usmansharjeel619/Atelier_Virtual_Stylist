@@ -1,30 +1,95 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Cormorant Garamond", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", sans-serif;
+  --font-serif: "Bricolage Grotesque", "Plus Jakarta Sans", sans-serif;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-gallery-paper: #FAF9F6;
+  --color-gallery-paper: #F6F4EC;
   --color-gallery-card: #FFFFFF;
-  --color-gallery-stone: #F4F3EE;
-  --color-gallery-border: #E5E3DC;
-  --color-gallery-ink: #141413;
-  --color-gallery-muted: #68665F;
-  --color-gallery-brass: #8A6A42;
+  --color-gallery-stone: #EBE7DA;
+  --color-gallery-border: #111111;
+  --color-gallery-ink: #111111;
+  --color-gallery-muted: #545149;
+  --color-gallery-brass: #2B4BFF;
+  --color-zine-lime: #D4FF38;
+  --color-zine-cobalt: #2B4BFF;
+  --color-zine-coral: #FF3D6E;
+  --color-zine-tangerine: #FF6B2C;
+  --color-zine-lilac: #D5A8FF;
 }
 
 @layer base {
   html {
     font-family: var(--font-sans);
-    background-color: #FAF9F6;
-    color: #141413;
+    background-color: #F6F4EC;
+    color: #111111;
     scroll-behavior: smooth;
   }
 
-  h1, h2, h3, .font-editorial {
-    font-family: var(--font-serif);
+  h1, h2, h3, .font-editorial, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
   }
+}
+
+.zine-bg-grid {
+  background-color: #F6F4EC;
+  background-image:
+    radial-gradient(rgba(17, 17, 17, 0.14) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.zine-card {
+  background-color: #FFFFFF;
+  border: 3px solid #111111;
+  box-shadow: 6px 6px 0 #111111;
+}
+
+.zine-card-lg {
+  background-color: #FFFFFF;
+  border: 3px solid #111111;
+  box-shadow: 8px 8px 0 #111111;
+}
+
+.zine-card-cobalt {
+  background-color: #FFFFFF;
+  border: 3px solid #111111;
+  box-shadow: 7px 7px 0 #2B4BFF;
+}
+
+.zine-card-coral {
+  background-color: #FFFFFF;
+  border: 3px solid #111111;
+  box-shadow: 7px 7px 0 #FF3D6E;
+}
+
+.zine-card-lime {
+  background-color: #FFFFFF;
+  border: 3px solid #111111;
+  box-shadow: 7px 7px 0 #D4FF38;
+}
+
+.zine-btn {
+  border: 3px solid #111111;
+  box-shadow: 4px 4px 0 #111111;
+  transition: transform 130ms ease, box-shadow 130ms ease, background-color 130ms ease;
+}
+
+.zine-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #111111;
+}
+
+.zine-btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #111111;
+}
+
+.zine-sticker {
+  border: 3px solid #111111;
+  box-shadow: 3px 3px 0 #111111;
 }
 
 @media (prefers-reduced-motion: reduce) {
